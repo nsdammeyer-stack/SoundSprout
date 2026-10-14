@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SoundSprout — Joyful Phonics & Reading Co-Pilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Andika:ital,wght@0,400;0,700;1,400&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-display: 'Fredoka', sans-serif;
+            --font-reading: 'Andika', sans-serif; /* Specifically designed for beginning readers with single-story 'a' and 'g' */
+        }
+
+        body {
+            font-family: var(--font-display);
+            background: linear-gradient(180deg, #FEF9C3 0%, #E0F2FE 55%, #DCFCE7 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .reading-font {
+            font-family: var(--font-reading);
+        }
+
+        /* 3D Tactile Toy Button Styling */
+        .toy-btn {
+            transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.1s ease;
+        }
+        .toy-btn:active {
+            transform: translateY(5px);
+        }
+
+        .toy-card {
+            box-shadow: 0 10px 0 rgba(0, 0, 0, 0.12), 0 15px 25px rgba(0, 0, 0, 0.08);
+            border: 4px solid white;
+        }
+
+        /* Active letter glow during slide & blend */
+        .blend-letter {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .blend-letter.active-letter {
+            transform: scale(1.28) translateY(-12px);
+            color: #EA580C;
+            text-shadow: 0 8px 20px rgba(251, 146, 60, 0.45);
+        }
+        .blend-letter.passed-letter {
+            color: #16A34A;
+        }
+
+        /* Custom Slider Styling */
+        .slider-track {
+            background: linear-gradient(90deg, #FDE047 0%, #4ADE80 50%, #38BDF8 100%);
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Silent Letter Styling for 100 Easy Lessons Orthography */
+        .silent-letter {
+            font-size: 0.62em;
+            opacity: 0.45;
+            vertical-align: baseline;
+        }
+
+        /* Macron bar over long vowels */
+        .macron-char {
+            position: relative;
+            display: inline-block;
+        }
+        .macron-char::before {
+            content: '';
+            position: absolute;
+            top: 0.08em;
+            left: 12%;
+            right: 12%;
+            height: 0.09em;
+            background-color: currentColor;
+            border-radius: 99px;
+        }
+
+        /* Animations */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: floatSlow 3.5s ease-in-out infinite;
+        }
+
+        @keyframes popBounce {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.12); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popBounce 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 18px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .recording-pulse {
+            animation: pulseRing 1.4s infinite;
+        }
+
+        /* Confetti Canvas */
+        #confettiCanvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col justify-between min-h-screen">
+
+    <!-- Confetti Celebration Layer -->
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- Top Navigation & Status Bar -->
+    <header class="w-full max-w-5xl mx-auto px-3 pt-3 pb-2 flex flex-wrap items-center justify-between gap-2 z-20">
+        <!-- App Logo & Companion -->
+        <div class="flex items-center gap-2.5 bg-white/90 backdrop-blur px-3.5 py-2 rounded-3xl shadow-md border-2 border-white">
+            <button id="companionAvatarBtn" onclick="switchMode('stickers')" title="Change Reading Buddy!" class="text-3xl sm:text-4xl hover:scale-110 transition-transform animate-float">
+                🦖
+            </button>
+            <div>
+                <h1 class="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-500 via-pink-500 to-indigo-600 bg-clip-text text-transparent leading-tight">
+                    SoundSprout
+                </h1>
+                <p id="companionNameLabel" class="text-xs text-slate-500 font-medium">Rex the Reading Dino</p>
+            </div>
+        </div>
+
+        <!-- Level Selector Pills -->
+        <div class="flex items-center bg-white/90 backdrop-blur p-1.5 rounded-3xl shadow-md border-2 border-white gap-1 overflow-x-auto max-w-full">
+            <button onclick="selectLevel(1)" id="lvlBtn-1" class="toy-btn px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-bold bg-orange-500 text-white shadow-sm whitespace-nowrap">
+                Lvl 1: Sounds
+            </button>
+            <button onclick="selectLevel(2)" id="lvlBtn-2" class="toy-btn px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 whitespace-nowrap">
+                Lvl 2: First Words
+            </button>
+            <button onclick="selectLevel(3)" id="lvlBtn-3" class="toy-btn px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 whitespace-nowrap">
+                Lvl 3: More Words
+            </button>
+            <button onclick="selectLevel(4)" id="lvlBtn-4" class="toy-btn px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 whitespace-nowrap">
+                Lvl 4: Sentences
+            </button>
+        </div>
+
+        <!-- Star Counter & Parent Studio Button -->
+        <div class="flex items-center gap-2">
+            <button onclick="switchMode('stickers')" class="toy-btn flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-3.5 py-2 rounded-3xl shadow-[0_4px_0_#D97706] border-2 border-white">
+                <span class="text-xl">⭐</span>
+                <span id="starCountDisplay" class="text-lg">0</span>
+            </button>
+
+            <button onclick="openParentModal()" class="toy-btn flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3.5 py-2 rounded-3xl shadow-[0_4px_0_#3730A3] border-2 border-white text-xs sm:text-sm" title="Parent Voice Studio & Settings">
+                <span>🎙️</span>
+                <span class="hidden sm:inline">Parent Studio</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Parent Co-Pilot Banner (Toggleable Tip Bar) -->
+    <div id="coPilotBanner" class="w-full max-w-4xl mx-auto px-3 my-1 z-10">
+        <div class="bg-indigo-950/90 text-indigo-50 rounded-3xl px-4 py-2.5 shadow-lg border-2 border-indigo-400/40 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <span class="bg-indigo-500 text-white text-xs font-bold uppercase px-2.5 py-1 rounded-full tracking-wider shrink-0">
+                    Parent Co-Pilot
+                </span>
+                <p id="coPilotScript" class="text-xs sm:text-sm font-medium leading-snug text-indigo-100">
+                    Point to the letter. Say: "Here is a new sound! My turn to say it slowly: mmmmm. Now say it with me!"
+                </p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="toggleOrthographyMarks()" id="orthoToggleBtn" class="text-xs bg-indigo-800 hover:bg-indigo-700 text-indigo-200 px-2.5 py-1.5 rounded-xl border border-indigo-600 transition" title="Toggle 100 Easy Lessons dots, arrows, and macrons">
+                    Cue Marks: ON
+                </button>
+                <button onclick="quickRecordCurrentItem()" id="quickMicBtn" class="text-xs bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 shadow" title="Record your own voice for this item in 2 seconds">
+                    <span>🎙️</span> <span id="quickMicLabel">Record Voice</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Interactive Stage -->
+    <main class="flex-1 w-full max-w-4xl mx-auto px-3 py-2 flex flex-col justify-center items-center relative">
+
+        <!-- ================= MODE 1: SOUND EXPLORER ================= -->
+        <section id="mode-explorer" class="w-full flex flex-col items-center">
+            <div class="w-full bg-white/95 rounded-[2.5rem] p-5 sm:p-8 toy-card flex flex-col items-center relative overflow-hidden">
+                
+                <!-- Top Badge Row -->
+                <div class="w-full flex justify-between items-center mb-2">
+                    <span id="explorerSoundTypeBadge" class="px-3.5 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        🌊 Continuous Sound — Hold for 3 seconds!
+                    </span>
+                    <span id="explorerProgressLabel" class="text-xs sm:text-sm font-bold text-slate-400">
+                        Sound 1 of 6
+                    </span>
+                </div>
+
+                <!-- Giant Lowercase Letter Display -->
+                <div class="my-2 sm:my-4 flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-12 w-full">
+                    
+                    <!-- Interactive Giant Letter Card -->
+                    <button onclick="playCurrentExplorerSound()" id="giantLetterCard" class="toy-btn group relative w-48 h-52 sm:w-60 sm:h-64 rounded-[2.2rem] bg-gradient-to-b from-amber-50 to-orange-100 border-4 border-orange-300 shadow-[0_12px_0_#F97316] flex flex-col items-center justify-center cursor-pointer select-none">
+                        <!-- Custom Voice Indicator Badge -->
+                        <span id="customVoiceBadgeExplorer" class="hidden absolute top-3 right-3 bg-rose-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full shadow">
+                            🎙️ Parent Voice
+                        </span>
+
+                        <!-- The Letter -->
+                        <div id="explorerLetterDisplay" class="reading-font text-[7.5rem] sm:text-[9.5rem] font-bold text-slate-900 leading-none group-hover:scale-105 transition-transform">
+                            m
+                        </div>
+
+                        <!-- 100 Easy Lessons Sub-Letter Cue (Starting dot + arrow) -->
+                        <div id="explorerOrthoCue" class="mt-2 flex items-center justify-center">
+                            <svg width="120" height="24" viewBox="0 0 120 24" class="overflow-visible">
+                                <circle cx="16" cy="12" r="7" fill="#EF4444" />
+                                <line x1="23" y1="12" x2="96" y2="12" stroke="#334155" stroke-width="5" stroke-linecap="round" />
+                                <polygon points="94,4 110,12 94,20" fill="#334155" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <!-- Visual Mnemonic & Mouth Cue Panel -->
+                    <div class="flex flex-col items-center md:items-start text-center md:text-left max-w-xs space-y-3">
+                        <div class="flex items-center gap-3 bg-sky-50 border-2 border-sky-200 px-4 py-3 rounded-3xl w-full">
+                            <span id="explorerEmoji" class="text-5xl sm:text-6xl animate-float">🧁</span>
+                            <div>
+                                <div id="explorerKeyword" class="text-lg sm:text-xl font-bold text-slate-800">Yummy Muffin!</div>
+                                <div id="explorerPhoneticText" class="text-orange-600 font-bold text-base sm:text-lg tracking-wide">"mmmmmm"</div>
+                            </div>
+                        </div>
+
+                        <!-- Mouth Action Clue -->
+                        <div class="bg-amber-50/90 border-2 border-amber-200 px-4 py-3 rounded-3xl w-full">
+                            <div class="text-xs font-bold uppercase tracking-wider text-amber-700 mb-0.5">👄 Mouth Clue</div>
+                            <p id="explorerMouthCue" class="text-sm text-slate-700 font-medium">
+                                Press your lips together and hum like you just tasted warm cookies: <b>"mmmmmm!"</b>
+                            </p>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-2.5 w-full pt-1">
+                            <button onclick="playCurrentExplorerSound()" class="toy-btn flex-1 bg-sky-500 hover:bg-sky-400 text-white font-bold py-3.5 px-4 rounded-2xl shadow-[0_6px_0_#0284C7] flex items-center justify-center gap-2 text-base sm:text-lg">
+                                <span>🔊</span> <span>Hear Sound</span>
+                            </button>
+                            <button onclick="celebrateExplorerMastery()" class="toy-btn bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3.5 px-5 rounded-2xl shadow-[0_6px_0_#15803D] flex items-center justify-center gap-1.5 text-base sm:text-lg" title="Award a star and go to next sound">
+                                <span>⭐</span> <span>I Said It!</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Strip of All Sounds in Current Level -->
+                <div class="w-full mt-6 pt-4 border-t-2 border-slate-100 flex flex-wrap items-center justify-center gap-2.5" id="explorerItemStrip">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= MODE 2: SLIDE & BLEND ================= -->
+        <section id="mode-blend" class="w-full hidden flex-col items-center">
+            <div class="w-full bg-white/95 rounded-[2.5rem] p-5 sm:p-8 toy-card flex flex-col items-center relative">
+                
+                <!-- Top Info Bar -->
+                <div class="w-full flex justify-between items-center mb-2">
+                    <span class="px-3.5 py-1 rounded-full text-xs sm:text-sm font-bold bg-orange-100 text-orange-800 border border-orange-300">
+                        🚂 Slide your finger to connect the sounds without stopping!
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <button onclick="prevBlendItem()" class="toy-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-sm">◀ Prev</button>
+                        <span id="blendProgressLabel" class="text-xs sm:text-sm font-bold text-slate-400">1 / 8</span>
+                        <button onclick="nextBlendItem()" class="toy-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-sm">Next ▶</button>
+                    </div>
+                </div>
+
+                <!-- Word / Sentence Stage -->
+                <div id="blendWordContainer" class="my-4 sm:my-6 min-h-[9.5rem] sm:min-h-[11rem] flex items-center justify-center gap-2 sm:gap-5 px-4 select-none">
+                    <!-- Letters injected dynamically -->
+                </div>
+
+                <!-- Interactive Finger Slider Track ("Follow the Arrow") -->
+                <div class="w-full max-w-xl px-4 my-2 flex flex-col items-center">
+                    <div class="relative w-full h-16 flex items-center">
+                        <!-- Track Background -->
+                        <div class="w-full h-6 rounded-full slider-track relative flex items-center justify-between px-6 border-2 border-white shadow-inner">
+                            <!-- Start Red Dot -->
+                            <div class="w-5 h-5 rounded-full bg-rose-500 border-2 border-white shadow"></div>
+                            <!-- Middle Dots -->
+                            <div class="w-3.5 h-3.5 rounded-full bg-white/80"></div>
+                            <!-- End Arrowhead -->
+                            <div class="text-white font-bold text-lg drop-shadow">➔</div>
+                        </div>
+
+                        <!-- Native Range Input overlaid for ultra-smooth touch & mouse dragging -->
+                        <input 
+                            type="range" 
+                            id="blendSlider" 
+                            min="0" 
+                            max="100" 
+                            value="0"
+                            oninput="handleBlendSlide(this.value)"
+                            onchange="handleBlendRelease(this.value)"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                        />
+
+                        <!-- Custom Visual Draggable Character Thumb -->
+                        <div id="sliderThumbVisual" class="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border-4 border-orange-500 shadow-[0_6px_0_#C2410C] flex items-center justify-center text-3xl sm:text-4xl transition-transform duration-75 z-10">
+                            👉
+                        </div>
+                    </div>
+                    <p id="blendInstructionSubtext" class="text-xs sm:text-sm font-bold text-slate-500 mt-2">
+                        Drag the pointer slowly across the track: <span class="text-orange-600">"Say it slow..."</span>
+                    </p>
+                </div>
+
+                <!-- Celebration Reveal Box (Hidden until blended or "Say It Fast!" tapped) -->
+                <div id="blendRevealCard" class="hidden my-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-3 border-emerald-300 rounded-3xl px-6 py-3 flex items-center gap-4 animate-pop shadow-sm">
+                    <span id="blendRevealEmoji" class="text-5xl sm:text-6xl">🐱</span>
+                    <div>
+                        <div class="text-xs uppercase font-bold text-emerald-700 tracking-wider">You read the word!</div>
+                        <div id="blendRevealText" class="text-xl sm:text-2xl font-bold text-slate-800">mat — A cozy rug on the floor!</div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons Row -->
+                <div class="flex flex-wrap items-center justify-center gap-3 mt-4 w-full">
+                    <button onclick="autoAnimateSlowBlend()" class="toy-btn bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold py-3.5 px-6 rounded-2xl shadow-[0_6px_0_#D97706] flex items-center gap-2 text-base sm:text-lg">
+                        <span>🐢</span> <span>Say It Slow</span>
+                    </button>
+
+                    <button onclick="triggerSayItFast()" id="sayItFastBtn" class="toy-btn bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3.5 px-7 rounded-2xl shadow-[0_6px_0_#15803D] flex items-center gap-2 text-lg sm:text-xl">
+                        <span>⚡</span> <span>Say It Fast!</span>
+                    </button>
+
+                    <button onclick="nextBlendItem()" class="toy-btn bg-sky-500 hover:bg-sky-400 text-white font-bold py-3.5 px-5 rounded-2xl shadow-[0_6px_0_#0284C7] flex items-center gap-2 text-base sm:text-lg">
+                        <span>Next Word</span> <span>➔</span>
+                    </button>
+                </div>
+
+                <!-- Quick Word Selector Strip -->
+                <div id="blendWordStrip" class="w-full mt-6 pt-4 border-t-2 border-slate-100 flex flex-wrap items-center justify-center gap-2">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= MODE 3: SOUND DETECTIVE (LISTENING GAME) ================= -->
+        <section id="mode-detective" class="w-full hidden flex-col items-center">
+            <div class="w-full bg-white/95 rounded-[2.5rem] p-5 sm:p-8 toy-card flex flex-col items-center text-center">
+                
+                <div class="w-full flex justify-between items-center mb-3">
+                    <span class="px-3.5 py-1 rounded-full text-xs sm:text-sm font-bold bg-purple-100 text-purple-800 border border-purple-300">
+                        🕵️‍♀️ Sound Detective Game
+                    </span>
+                    <span id="detectiveStreakBadge" class="text-xs sm:text-sm font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                        🔥 Streak: 0
+                    </span>
+                </div>
+
+                <!-- Prompt Speaker Button -->
+                <div class="my-2 flex flex-col items-center">
+                    <button onclick="playDetectiveTargetAudio()" class="toy-btn w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-b from-purple-500 to-indigo-600 text-white shadow-[0_10px_0_#3730A3] border-4 border-white flex flex-col items-center justify-center gap-1 hover:scale-105 transition">
+                        <span class="text-4xl sm:text-5xl">🔊</span>
+                        <span class="text-xs font-bold uppercase tracking-wider">Listen</span>
+                    </button>
+                    <h2 id="detectivePromptTitle" class="mt-3 text-xl sm:text-2xl font-bold text-slate-800">
+                        Tap the card that says <span class="text-purple-600">"ssssss"</span>!
+                    </h2>
+                </div>
+
+                <!-- 3 Big Choice Cards -->
+                <div id="detectiveChoicesGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 w-full my-4">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="detectiveFeedback" class="h-8 text-lg font-bold text-emerald-600"></div>
+            </div>
+        </section>
+
+        <!-- ================= MODE 4: STICKER BOOK & REWARDS ================= -->
+        <section id="mode-stickers" class="w-full hidden flex-col items-center">
+            <div class="w-full bg-white/95 rounded-[2.5rem] p-5 sm:p-8 toy-card flex flex-col items-center">
+                <div class="flex flex-col sm:flex-row items-center justify-between w-full mb-4 gap-2">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 flex items-center gap-2">
+                            <span>🏆</span> <span>Reading Buddy Sticker Book</span>
+                        </h2>
+                        <p class="text-sm text-slate-500 font-medium">
+                            Earn stars by practicing sounds and blending words! Tap any unlocked buddy to make them your helper.
+                        </p>
+                    </div>
+                    <div class="bg-amber-100 border-2 border-amber-300 px-4 py-2 rounded-2xl text-amber-900 font-bold text-sm shrink-0">
+                        You have <span id="stickerStarTotal" class="text-lg">0</span> ⭐ Stars!
+                    </div>
+                </div>
+
+                <!-- Companions Grid -->
+                <div id="stickerGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full my-2">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Mode Switcher Dock (Extra-Large Touch Targets for 4-Year-Olds) -->
+    <nav class="w-full max-w-3xl mx-auto px-3 pb-4 pt-2 z-20">
+        <div class="bg-white/95 backdrop-blur rounded-[2rem] p-2 shadow-xl border-4 border-white grid grid-cols-4 gap-2">
+            <button onclick="switchMode('explorer')" id="navBtn-explorer" class="toy-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-3xl bg-orange-500 text-white font-bold shadow-[0_5px_0_#C2410C]">
+                <span class="text-2xl sm:text-3xl">🔤</span>
+                <span class="text-xs sm:text-base">Sound Explorer</span>
+            </button>
+
+            <button onclick="switchMode('blend')" id="navBtn-blend" class="toy-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-3xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold">
+                <span class="text-2xl sm:text-3xl">🚂</span>
+                <span class="text-xs sm:text-base">Slide & Blend</span>
+            </button>
+
+            <button onclick="switchMode('detective')" id="navBtn-detective" class="toy-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-3xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold">
+                <span class="text-2xl sm:text-3xl">🕵️‍♀️</span>
+                <span class="text-xs sm:text-base">Detective</span>
+            </button>
+
+            <button onclick="switchMode('stickers')" id="navBtn-stickers" class="toy-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-3xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold">
+                <span class="text-2xl sm:text-3xl">🌟</span>
+                <span class="text-xs sm:text-base">Sticker Book</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ================= PARENT VOICE STUDIO & CLOUD SYNC MODAL ================= -->
+    <div id="parentModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border-4 border-indigo-200 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="bg-indigo-600 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🎙️</span>
+                    <div>
+                        <h3 class="text-xl font-bold">Parent Voice Studio & Pedagogy Settings</h3>
+                        <p class="text-xs text-indigo-200">Record real phoneme sounds so your child hears your warm, accurate voice!</p>
+                    </div>
+                </div>
+                <button onclick="closeParentModal()" class="bg-indigo-800 hover:bg-indigo-700 text-white w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-1">
+                
+                <!-- Why Record Parent Voice Box -->
+                <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-sm text-slate-700 space-y-1">
+                    <div class="font-bold text-amber-900 flex items-center gap-1.5">
+                        <span>💡</span> <span>Why Record Your Own Phonemes? (Direct Instruction Tip)</span>
+                    </div>
+                    <p>
+                        Computer voices often say letter names ("em" or "ess") or add an extra "uh" sound ("muh", "suh") which makes blending words like <b>s-a-m</b> confusing for 4-year-olds. Tap <b>Hold or Tap to Record</b> below to record pure 2-second sounds (e.g., <i>"mmmmmm"</i>, <i>"ssssss"</i>, <i>"aaaaaa"</i>) saved right in your browser!
+                    </p>
+                </div>
+
+                <!-- Voice Recording Grid -->
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-slate-800 text-base">Record Sounds & Words (Saved Locally in IndexedDB)</h4>
+                        <span id="micPermissionStatus" class="text-xs font-bold text-slate-500">Microphone Ready</span>
+                    </div>
+                    <div id="voiceStudioGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Google Sheets Cloud Sync & Progress Backup -->
+                <div class="border-t-2 border-slate-100 pt-4 space-y-3">
+                    <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <span>☁️</span> <span>Optional Google Sheets Progress Webhook</span>
+                    </h4>
+                    <p class="text-xs text-slate-500">
+                        Paste a Google Apps Script Web App URL if you'd like to log your child's stars and practiced words to a family Google Sheet. All progress is also automatically saved offline on this device.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input 
+                            type="url" 
+                            id="webhookUrlInput" 
+                            placeholder="https://script.google.com/macros/s/.../exec" 
+                            class="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-200 text-sm focus:border-indigo-500 focus:outline-none"
+                        />
+                        <button onclick="saveWebhookAndSync()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm shrink-0 shadow">
+                            Save & Sync Now
+                        </button>
+                    </div>
+                    <div id="webhookStatusMsg" class="text-xs font-bold text-emerald-600"></div>
+                </div>
+
+                <!-- Reset Options -->
+                <div class="border-t-2 border-slate-100 pt-4 flex flex-wrap items-center justify-between gap-2">
+                    <button onclick="awardBonusStar()" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-3.5 py-2 rounded-xl">
+                        ⭐ Give +5 Bonus Stars (Parent Reward)
+                    </button>
+                    <button onclick="clearAllCustomVoices()" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold px-3.5 py-2 rounded-xl">
+                        🗑️ Reset Recorded Voices
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /********************************************************************
+         * 1. SYSTEMATIC PHONICS CURRICULUM DATA
+         * Inspired by "Teach Your Child to Read in 100 Easy Lessons"
+         ********************************************************************/
+        const PHONICS_SOUNDS = [
+            // Level 1: Core Continuous & Stop Sounds
+            {
+                id: 's_m',
+                symbol: 'm',
+                displayHtml: 'm',
+                level: 1,
+                type: 'continuous',
+                phoneticTTS: 'mmmmmm',
+                voiceGuide: 'Say "mmmmmm" continuously (like yummy food). Do NOT say "muh".',
+                emoji: '🧁',
+                keyword: 'Yummy Muffin!',
+                spokenCue: '"mmmmmm"',
+                mouthCue: 'Press your lips together and hum like you just tasted a warm muffin: "mmmmmm!"',
+                parentScript: 'Point to the red dot under m. Say: "Here is a new sound! My turn to say it slowly: mmmmmm. Now say it with me!"'
+            },
+            {
+                id: 's_s',
+                symbol: 's',
+                displayHtml: 's',
+                level: 1,
+                type: 'continuous',
+                phoneticTTS: 'ssssss',
+                voiceGuide: 'Hiss like a snake: "ssssss". Do NOT say "suh" or "ess".',
+                emoji: '🐍',
+                keyword: 'Silly Snake!',
+                spokenCue: '"ssssss"',
+                mouthCue: 'Smile gently, keep your teeth together, and let the air hiss out like a friendly snake: "ssssss!"',
+                parentScript: 'Slide your finger under s. Say: "This sound hisses like a snake: ssssss. Can you hold ssssss for 3 seconds?"'
+            },
+            {
+                id: 's_a',
+                symbol: 'a',
+                displayHtml: 'a',
+                level: 1,
+                type: 'continuous',
+                phoneticTTS: 'aaah',
+                voiceGuide: 'Short a sound as in "apple" or "am", held out: "aaaaaa".',
+                emoji: '🍎',
+                keyword: 'Crunchy Apple!',
+                spokenCue: '"aaaaaa"',
+                mouthCue: 'Open your mouth wide like you are taking a big bite of a crunchy red apple: "aaaaaa!"',
+                parentScript: 'Point to a. Say: "Open wide for this sound! It says aaaaaa (like in apple and am). Let\'s sing it together!"'
+            },
+            {
+                id: 's_e',
+                symbol: 'ē',
+                displayHtml: '<span class="macron-char">e</span>',
+                plainHtml: 'e',
+                level: 1,
+                type: 'continuous',
+                phoneticTTS: 'eeeeee',
+                voiceGuide: 'Long e sound as in "eat" and "see": "eeeeee".',
+                emoji: '🦅',
+                keyword: 'Happy Eagle!',
+                spokenCue: '"eeeeee"',
+                mouthCue: 'Give a big cheesy smile and say "eeeeee!" Notice the straight hat line on top tells us to say its long name!',
+                parentScript: 'Point to the line over ē. Say: "When e wears its hat, it says eeeeee like in see and eat!"'
+            },
+            {
+                id: 's_t',
+                symbol: 't',
+                displayHtml: 't',
+                level: 1,
+                type: 'stop',
+                phoneticTTS: 't',
+                voiceGuide: 'Quick whispery tap with tongue behind top teeth: "t!" (no "tuh").',
+                emoji: '⏰',
+                keyword: 'Ticking Clock!',
+                spokenCue: '"t! t! t!"',
+                mouthCue: 'Tap your tongue right behind your top teeth and let out a quick puff of air: "t!" (Quick bouncy sound!)',
+                parentScript: 'Tap under t. Say: "This is a quick bouncy sound! Tap your tongue and whisper: t! Don\'t say tuh!"'
+            },
+            {
+                id: 's_r',
+                symbol: 'r',
+                displayHtml: 'r',
+                level: 1,
+                type: 'continuous',
+                phoneticTTS: 'rrrrrr',
+                voiceGuide: 'Growl gently like a lion or racecar: "rrrrrr" (not "ruh").',
+                emoji: '🦁',
+                keyword: 'Roaring Lion!',
+                spokenCue: '"rrrrrr"',
+                mouthCue: 'Curl the sides of your tongue up and purr like a friendly lion cub or racecar engine: "rrrrrr!"',
+                parentScript: 'Slide under r. Say: "Start up your racecar engine! Hold the sound: rrrrrr!"'
+            },
+            // Level 3 New Sounds
+            {
+                id: 's_d',
+                symbol: 'd',
+                displayHtml: 'd',
+                level: 3,
+                type: 'stop',
+                phoneticTTS: 'd',
+                voiceGuide: 'Quick voiced tap: "d!" as at the end of "mad" (avoid heavy "duh").',
+                emoji: '🥁',
+                keyword: 'Dancing Drum!',
+                spokenCue: '"d! d!"',
+                mouthCue: 'Tap your tongue behind your top teeth for a quick drum beat: "d!"',
+                parentScript: 'Tap the dot under d. Say: "Here is a quick drum sound: d! Notice the round drum sits in front of the tall stick."'
+            },
+            {
+                id: 's_i',
+                symbol: 'i',
+                displayHtml: 'i',
+                level: 3,
+                type: 'continuous',
+                phoneticTTS: 'ih',
+                voiceGuide: 'Short i sound as in "it", "in", "sit": "iiiiii".',
+                emoji: '🦎',
+                keyword: 'Itty-Bitty Iguana!',
+                spokenCue: '"iiiiii"',
+                mouthCue: 'Wrinkle your nose slightly and make a tiny smile for the short sound in "in" and "sit": "iiiiii!"',
+                parentScript: 'Slide under i. Say: "Look at the little dot on top! This sound says iiiiii like in sit and in."'
+            },
+            {
+                id: 's_n',
+                symbol: 'n',
+                displayHtml: 'n',
+                level: 3,
+                type: 'continuous',
+                phoneticTTS: 'nnnnnn',
+                voiceGuide: 'Hum through your nose with tongue behind top teeth: "nnnnnn".',
+                emoji: '✈️',
+                keyword: 'Airplane Nose!',
+                spokenCue: '"nnnnnn"',
+                mouthCue: 'Put your tongue behind your top teeth and hum through your nose like a flying airplane: "nnnnnn!"',
+                parentScript: 'Slide under n. Say: "Hold this sound through your nose like an airplane: nnnnnn!"'
+            },
+            {
+                id: 's_c',
+                symbol: 'c',
+                displayHtml: 'c',
+                level: 3,
+                type: 'stop',
+                phoneticTTS: 'k',
+                voiceGuide: 'Crisp unvoiced click in the back of the throat: "k!" as in "cat".',
+                emoji: '🐱',
+                keyword: 'Curly Cat!',
+                spokenCue: '"c! (k!)"',
+                mouthCue: 'Make a quick gentle click at the back of your mouth like crunching a cracker: "k!"',
+                parentScript: 'Tap under c. Say: "This curly letter makes a quick snapping sound: c! like at the start of cat."'
+            },
+            {
+                id: 's_o',
+                symbol: 'o',
+                displayHtml: 'o',
+                level: 3,
+                type: 'continuous',
+                phoneticTTS: 'aaah',
+                voiceGuide: 'Short o sound as in "octopus", "on", "mom", "dog": "oooooo" (ah).',
+                emoji: '🐙',
+                keyword: 'Octopus On a Rock!',
+                spokenCue: '"ooo (ah)"',
+                mouthCue: 'Make a big round circle with your mouth like the doctor is looking inside: "ahhhhh!"',
+                parentScript: 'Slide under o. Say: "Open your mouth in a round circle and say ahhhhh like in octopus and mom!"'
+            }
+        ];
+
+        const BLEND_WORDS = [
+            // Level 2: First Blends & Words (using m, s, a, ē, t, r)
+            {
+                id: 'w_am',
+                word: 'am',
+                level: 2,
+                letters: [
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 'm', soundId: 's_m', ortho: 'continuous' }
+                ],
+                emoji: '🙋',
+                meaning: 'am — "I am so proud of you!"',
+                parentScript: 'Have your child slide from a to m without pausing: "aaaammmm". Then tap "Say It Fast!" -> "am!"'
+            },
+            {
+                id: 'w_sam',
+                word: 'sam',
+                level: 2,
+                letters: [
+                    { char: 's', soundId: 's_s', ortho: 'continuous' },
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 'm', soundId: 's_m', ortho: 'continuous' }
+                ],
+                emoji: '🐶',
+                meaning: 'Sam — Our friendly puppy pal Sam!',
+                parentScript: 'Keep your voice going smoothly as your child drags across: "ssssaaaammmm" -> "Sam!"'
+            },
+            {
+                id: 'w_mat',
+                word: 'mat',
+                level: 2,
+                letters: [
+                    { char: 'm', soundId: 's_m', ortho: 'continuous' },
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 't', soundId: 's_t', ortho: 'stop' }
+                ],
+                emoji: '🧶',
+                meaning: 'mat — A soft cozy rug on the floor!',
+                parentScript: 'Hold "mmmmaaaa" and snap right into "t" at the end: "mmmmaaaat" -> "mat!"'
+            },
+            {
+                id: 'w_sat',
+                word: 'sat',
+                level: 2,
+                letters: [
+                    { char: 's', soundId: 's_s', ortho: 'continuous' },
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 't', soundId: 's_t', ortho: 'stop' }
+                ],
+                emoji: '🪑',
+                meaning: 'sat — Sam sat down on the chair!',
+                parentScript: 'Blend smoothly: "ssssaaaat" -> "sat!" Ask: "What did Sam do? He sat!"'
+            },
+            {
+                id: 'w_ram',
+                word: 'ram',
+                level: 2,
+                letters: [
+                    { char: 'r', soundId: 's_r', ortho: 'continuous' },
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 'm', soundId: 's_m', ortho: 'continuous' }
+                ],
+                emoji: '🐏',
+                meaning: 'ram — A mountain sheep with curly horns!',
+                parentScript: 'All three sounds are continuous! Sing them together: "rrrraaaammmm" -> "ram!"'
+            },
+            {
+                id: 'w_eat',
+                word: 'eat',
+                level: 2,
+                letters: [
+                    { char: 'e', displayHtml: '<span class="macron-char">e</span>', soundId: 's_e', ortho: 'continuous' },
+                    { char: 'a', displayHtml: '<span class="silent-letter">a</span>', soundId: null, ortho: 'silent' },
+                    { char: 't', soundId: 's_t', ortho: 'stop' }
+                ],
+                emoji: '🍓',
+                meaning: 'eat — Time to eat a sweet strawberry!',
+                parentScript: '100 Easy Lessons Cue: Point out that the tiny "a" is fast asleep (silent), so we slide straight from long ē to t: "eeeeet" -> "eat!"'
+            },
+            {
+                id: 'w_see',
+                word: 'see',
+                level: 2,
+                letters: [
+                    { char: 's', soundId: 's_s', ortho: 'continuous' },
+                    { char: 'e', displayHtml: '<span class="macron-char">e</span>', soundId: 's_e', ortho: 'continuous' },
+                    { char: 'e', displayHtml: '<span class="silent-letter">e</span>', soundId: null, ortho: 'silent' }
+                ],
+                emoji: '👀',
+                meaning: 'see — "I see you with my eyes!"',
+                parentScript: 'Slide from ssssss to long eeeeee (the little e at the end is quiet): "sssseeeeee" -> "see!"'
+            },
+            {
+                id: 'w_me',
+                word: 'me',
+                level: 2,
+                letters: [
+                    { char: 'm', soundId: 's_m', ortho: 'continuous' },
+                    { char: 'e', displayHtml: '<span class="macron-char">e</span>', soundId: 's_e', ortho: 'continuous' }
+                ],
+                emoji: '🌟',
+                meaning: 'me — Point to yourself and smile: "me!"',
+                parentScript: 'Two smooth continuous sounds: "mmmmeeeeee" -> "me!"'
+            },
+
+            // Level 3: More Sounds & Words (d, i, n, c, o)
+            {
+                id: 'w_mad',
+                word: 'mad',
+                level: 3,
+                letters: [
+                    { char: 'm', soundId: 's_m', ortho: 'continuous' },
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 'd', soundId: 's_d', ortho: 'stop' }
+                ],
+                emoji: '😠',
+                meaning: 'mad — Stomping feet with a grumpy face!',
+                parentScript: 'Connect mmmmaaaa to the quick drum sound d: "mmmmaaaad" -> "mad!"'
+            },
+            {
+                id: 'w_sad',
+                word: 'sad',
+                level: 3,
+                letters: [
+                    { char: 's', soundId: 's_s', ortho: 'continuous' },
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 'd', soundId: 's_d', ortho: 'stop' }
+                ],
+                emoji: '😢',
+                meaning: 'sad — Needs a big warm hug!',
+                parentScript: 'Slide smoothly: "ssssaaaad" -> "sad!"'
+            },
+            {
+                id: 'w_sit',
+                word: 'sit',
+                level: 3,
+                letters: [
+                    { char: 's', soundId: 's_s', ortho: 'continuous' },
+                    { char: 'i', soundId: 's_i', ortho: 'continuous' },
+                    { char: 't', soundId: 's_t', ortho: 'stop' }
+                ],
+                emoji: '🐕',
+                meaning: 'sit — Good puppy knows how to sit!',
+                parentScript: 'Slide from ssssss through short iiiiii to t: "ssssiiiit" -> "sit!"'
+            },
+            {
+                id: 'w_in',
+                word: 'in',
+                level: 3,
+                letters: [
+                    { char: 'i', soundId: 's_i', ortho: 'continuous' },
+                    { char: 'n', soundId: 's_n', ortho: 'continuous' }
+                ],
+                emoji: '📦',
+                meaning: 'in — The kitten is hiding in the box!',
+                parentScript: 'Hold both continuous sounds together: "iiiinnnn" -> "in!"'
+            },
+            {
+                id: 'w_man',
+                word: 'man',
+                level: 3,
+                letters: [
+                    { char: 'm', soundId: 's_m', ortho: 'continuous' },
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 'n', soundId: 's_n', ortho: 'continuous' }
+                ],
+                emoji: '👨',
+                meaning: 'man — A friendly waving man!',
+                parentScript: 'Every sound can be stretched out! Sing it slowly: "mmmmaaaannnn" -> "man!"'
+            },
+            {
+                id: 'w_cat',
+                word: 'cat',
+                level: 3,
+                letters: [
+                    { char: 'c', soundId: 's_c', ortho: 'stop' },
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 't', soundId: 's_t', ortho: 'stop' }
+                ],
+                emoji: '🐱',
+                meaning: 'cat — Purring little kitty cat!',
+                parentScript: 'Tip for starting with a stop sound (c): Tell your child to get their mouth ready for aaaa right as they snap c -> "caaaat" -> "cat!"'
+            },
+            {
+                id: 'w_dog',
+                word: 'dog',
+                level: 3,
+                letters: [
+                    { char: 'd', soundId: 's_d', ortho: 'stop' },
+                    { char: 'o', soundId: 's_o', ortho: 'continuous' },
+                    { char: 'g', soundId: 's_d', ortho: 'stop' }
+                ],
+                emoji: '🐶',
+                meaning: 'dog — Wagging tail and playing fetch!',
+                parentScript: 'Connect d straight into round oooo and g: "doooog" -> "dog!"'
+            },
+            {
+                id: 'w_mom',
+                word: 'mom',
+                level: 3,
+                letters: [
+                    { char: 'm', soundId: 's_m', ortho: 'continuous' },
+                    { char: 'o', soundId: 's_o', ortho: 'continuous' },
+                    { char: 'm', soundId: 's_m', ortho: 'continuous' }
+                ],
+                emoji: '💝',
+                meaning: 'mom — Big hugs for Mom!',
+                parentScript: 'All continuous sounds! Stretch it with love: "mmmmooooommmm" -> "mom!"'
+            },
+            {
+                id: 'w_dad',
+                word: 'dad',
+                level: 3,
+                letters: [
+                    { char: 'd', soundId: 's_d', ortho: 'stop' },
+                    { char: 'a', soundId: 's_a', ortho: 'continuous' },
+                    { char: 'd', soundId: 's_d', ortho: 'stop' }
+                ],
+                emoji: '🦸‍♂️',
+                meaning: 'dad — High five for Dad!',
+                parentScript: 'Jump straight from d into open aaaa and finish with d: "daaaad" -> "dad!"'
+            },
+
+            // Level 4: Mini Sentences (Word-by-Word Slide & Read)
+            {
+                id: 'sent_1',
+                word: 'I see Sam.',
+                level: 4,
+                isSentence: true,
+                letters: [
+                    { char: 'I', soundId: null, spokenWord: 'I', ortho: 'continuous' },
+                    { char: 'see', displayHtml: 's<span class="macron-char">e</span><span class="silent-letter">e</span>', soundId: null, spokenWord: 'see', ortho: 'continuous' },
+                    { char: 'Sam.', soundId: null, spokenWord: 'Sam', ortho: 'continuous' }
+                ],
+                emoji: '🐕‍🦺',
+                meaning: '"I see Sam." — You just read a whole sentence!',
+                parentScript: 'Slide from word to word! Have your child sound out each word, then tap "Say It Fast!" to read the whole story smoothly!'
+            },
+            {
+                id: 'sent_2',
+                word: 'Sam sat on a mat.',
+                level: 4,
+                isSentence: true,
+                letters: [
+                    { char: 'Sam', soundId: null, spokenWord: 'Sam', ortho: 'continuous' },
+                    { char: 'sat', soundId: null, spokenWord: 'sat', ortho: 'stop' },
+                    { char: 'on', soundId: null, spokenWord: 'on', ortho: 'continuous' },
+                    { char: 'a', soundId: null, spokenWord: 'a', ortho: 'continuous' },
+                    { char: 'mat.', soundId: null, spokenWord: 'mat', ortho: 'stop' }
+                ],
+                emoji: '🐶🧶',
+                meaning: '"Sam sat on a mat." — Picture Sam relaxing on his cozy rug!',
+                parentScript: 'Ask comprehension question after reading: "Where did Sam sit? On a mat!"'
+            },
+            {
+                id: 'sent_3',
+                word: 'The cat is fat.',
+                level: 4,
+                isSentence: true,
+                letters: [
+                    { char: 'The', soundId: null, spokenWord: 'The', ortho: 'continuous' },
+                    { char: 'cat', soundId: null, spokenWord: 'cat', ortho: 'stop' },
+                    { char: 'is', soundId: null, spokenWord: 'is', ortho: 'continuous' },
+                    { char: 'fat.', soundId: null, spokenWord: 'fat', ortho: 'stop' }
+                ],
+                emoji: '🐈🍊',
+                meaning: '"The cat is fat." — A round, fluffy orange kitty who loves snacks!',
+                parentScript: 'Celebrate wildly! Your 4-year-old is reading full sentences with comprehension!'
+            }
+        ];
+
+        const COMPANION_STICKERS = [
+            { id: 'dino', emoji: '🦖', name: 'Rex the Reading Dino', starsNeeded: 0, desc: 'Loves roaring "rrrrrr"!' },
+            { id: 'puppy', emoji: '🐶', name: 'Sam the Super Pup', starsNeeded: 3, desc: 'Sits on the cozy mat!' },
+            { id: 'kitty', emoji: '🐱', name: 'Cleo the Cozy Cat', starsNeeded: 6, desc: 'Purrs when you blend words!' },
+            { id: 'rocket', emoji: '🚀', name: 'Zoom the Space Rocket', starsNeeded: 10, desc: 'Blasts off when you Say It Fast!' },
+            { id: 'unicorn', emoji: '🦄', name: 'Sparkle the Unicorn', starsNeeded: 15, desc: 'Magical long vowel master!' },
+            { id: 'monster', emoji: '👾', name: 'Munch the Muffin Monster', starsNeeded: 20, desc: 'Always humming "mmmmmm"!' },
+            { id: 'owl', emoji: '🦉', name: 'Ollie the Detective Owl', starsNeeded: 25, desc: 'Super ears for Sound Detective!' },
+            { id: 'dragon', emoji: '🐉', name: 'Blaze the Story Dragon', starsNeeded: 32, desc: 'Champion of Level 4 Sentences!' }
+        ];
+
+        /********************************************************************
+         * 2. APPLICATION STATE & PERSISTENCE (localStorage + IndexedDB)
+         ********************************************************************/
+        let appState = {
+            currentLevel: 1,
+            currentMode: 'explorer', // 'explorer' | 'blend' | 'detective' | 'stickers'
+            explorerIndex: 0,
+            blendIndex: 0,
+            stars: 0,
+            activeCompanion: 'dino',
+            showOrthoMarks: true,
+            detectiveStreak: 0,
+            detectiveTarget: null,
+            webhookUrl: '',
+            masteredItems: {}
+        };
+
+        // Load saved state from localStorage
+        function loadSavedState() {
+            try {
+                const raw = localStorage.getItem('soundsprout_state_v1');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    appState = { ...appState, ...parsed };
+                }
+            } catch (e) {
+                console.warn('Could not load localStorage state', e);
+            }
+            updateHeaderUI();
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('soundsprout_state_v1', JSON.stringify({
+                    currentLevel: appState.currentLevel,
+                    stars: appState.stars,
+                    activeCompanion: appState.activeCompanion,
+                    showOrthoMarks: appState.showOrthoMarks,
+                    webhookUrl: appState.webhookUrl,
+                    masteredItems: appState.masteredItems
+                }));
+            } catch (e) {
+                console.warn('Could not save state', e);
+            }
+            updateHeaderUI();
+        }
+
+        /********************************************************************
+         * 3. INDEXED-DB CUSTOM PARENT VOICE RECORDER ENGINE
+         ********************************************************************/
+        const DB_NAME = 'SoundSproutVoiceDB';
+        const STORE_NAME = 'recordings';
+        let voiceDB = null;
+        let customAudioCache = {}; // id -> Blob URL
+        let activeMediaRecorder = null;
+        let recordingItemId = null;
+
+        function initVoiceDB() {
+            return new Promise((resolve) => {
+                if (!window.indexedDB) {
+                    resolve(null);
+                    return;
+                }
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = (e) => {
+                    voiceDB = e.target.result;
+                    loadAllCustomVoicesIntoMemory().then(resolve);
+                };
+                request.onerror = () => resolve(null);
+            });
+        }
+
+        function loadAllCustomVoicesIntoMemory() {
+            return new Promise((resolve) => {
+                if (!voiceDB) return resolve();
+                const tx = voiceDB.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.openCursor();
+                req.onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if (cursor) {
+                        const blob = cursor.value;
+                        if (blob instanceof Blob) {
+                            customAudioCache[cursor.key] = URL.createObjectURL(blob);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve();
+                    }
+                };
+                req.onerror = () => resolve();
+            });
+        }
+
+        function saveVoiceBlobToDB(itemId, blob) {
+            return new Promise((resolve) => {
+                if (customAudioCache[itemId]) {
+                    URL.revokeObjectURL(customAudioCache[itemId]);
+                }
+                customAudioCache[itemId] = URL.createObjectURL(blob);
+                if (!voiceDB) return resolve();
+                const tx = voiceDB.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(blob, itemId);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => resolve();
+            });
+        }
+
+        async function clearAllCustomVoices() {
+            Object.values(customAudioCache).forEach(url => URL.revokeObjectURL(url));
+            customAudioCache = {};
+            if (voiceDB) {
+                const tx = voiceDB.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).clear();
+            }
+            renderVoiceStudioGrid();
+            renderExplorer();
+            playSoundEffect('pop');
+        }
+
+        async function toggleRecordForItem(itemId, btnElement) {
+            // If currently recording this item, stop immediately
+            if (activeMediaRecorder && activeMediaRecorder.state === 'recording') {
+                activeMediaRecorder.stop();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const chunks = [];
+                recordingItemId = itemId;
+                activeMediaRecorder = new MediaRecorder(stream);
+
+                if (btnElement) {
+                    btnElement.classList.add('recording-pulse', 'bg-rose-600', 'text-white');
+                    btnElement.innerHTML = '⏹️ Recording... (Tap to Stop)';
+                }
+
+                activeMediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) chunks.push(e.data);
+                };
+
+                activeMediaRecorder.onstop = async () => {
+                    stream.getTracks().forEach(t => t.stop());
+                    const blob = new Blob(chunks, { type: activeMediaRecorder.mimeType || 'audio/webm' });
+                    await saveVoiceBlobToDB(itemId, blob);
+                    activeMediaRecorder = null;
+                    recordingItemId = null;
+
+                    playSoundEffect('chime');
+                    renderVoiceStudioGrid();
+                    renderExplorer();
+                    updateQuickMicButton();
+                };
+
+                activeMediaRecorder.start();
+
+                // Auto-stop after 2.6 seconds so parents don't even have to tap twice
+                setTimeout(() => {
+                    if (activeMediaRecorder && activeMediaRecorder.state === 'recording' && recordingItemId === itemId) {
+                        activeMediaRecorder.stop();
+                    }
+                }, 2600);
+
+            } catch (err) {
+                const statusEl = document.getElementById('micPermissionStatus');
+                if (statusEl) {
+                    statusEl.textContent = '⚠️ Please allow microphone access in your browser.';
+                    statusEl.className = 'text-xs font-bold text-rose-600';
+                }
+            }
+        }
+
+        function quickRecordCurrentItem() {
+            const btn = document.getElementById('quickMicBtn');
+            let currentId = null;
+            if (appState.currentMode === 'explorer') {
+                const sounds = getSoundsForCurrentLevel();
+                const s = sounds[appState.explorerIndex] || sounds[0];
+                currentId = s.id;
+            } else if (appState.currentMode === 'blend') {
+                const words = getWordsForCurrentLevel();
+                const w = words[appState.blendIndex] || words[0];
+                currentId = w.id;
+            } else if (appState.currentMode === 'detective' && appState.detectiveTarget) {
+                currentId = appState.detectiveTarget.id;
+            }
+            if (currentId) {
+                toggleRecordForItem(currentId, btn);
+            }
+        }
+
+        function updateQuickMicButton() {
+            const btn = document.getElementById('quickMicBtn');
+            const label = document.getElementById('quickMicLabel');
+            if (!btn || !label) return;
+
+            let currentId = null;
+            if (appState.currentMode === 'explorer') {
+                const sounds = getSoundsForCurrentLevel();
+                const s = sounds[appState.explorerIndex] || sounds[0];
+                if (s) currentId = s.id;
+            } else if (appState.currentMode === 'blend') {
+                const words = getWordsForCurrentLevel();
+                const w = words[appState.blendIndex] || words[0];
+                if (w) currentId = w.id;
+            }
+
+            btn.classList.remove('recording-pulse');
+            if (currentId && customAudioCache[currentId]) {
+                label.textContent = 'Re-Record Voice ✓';
+                btn.className = 'text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 shadow';
+            } else {
+                label.textContent = 'Record Voice (2s)';
+                btn.className = 'text-xs bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 shadow';
+            }
+        }
+
+        /********************************************************************
+         * 4. WEB AUDIO SYNTHESIZER & PHONETIC SPEECH ENGINE
+         ********************************************************************/
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Cheerful UI sound effects via Web Audio API
+        function playSoundEffect(type) {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+
+                if (type === 'pop') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(340, now);
+                    osc.frequency.exponentialRampToValueAtTime(680, now + 0.09);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'chime') {
+                    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+                    notes.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                        gain.gain.setValueAtTime(0.16, now + i * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + i * 0.08);
+                        osc.stop(now + i * 0.08 + 0.36);
+                    });
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5 E5 G5 C6
+                    notes.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        const start = now + i * 0.1;
+                        const dur = i === 3 ? 0.55 : 0.25;
+                        osc.frequency.setValueAtTime(freq, start);
+                        gain.gain.setValueAtTime(0.22, start);
+                        gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(start);
+                        osc.stop(start + dur + 0.02);
+                    });
+                } else if (type === 'gentleTryAgain') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.linearRampToValueAtTime(240, now + 0.22);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {}
+        }
+
+        // Play either Parent Recorded Voice OR Phonetic TTS Fallback
+        function playAudioForItem(itemId, fallbackText, rate = 0.85, pitch = 1.1) {
+            // 1. Check if parent recorded custom voice for this sound/word
+            if (customAudioCache[itemId]) {
+                const audio = new Audio(customAudioCache[itemId]);
+                audio.play().catch(() => {});
+                return;
+            }
+
+            // 2. Fallback to carefully tuned Web Speech API
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(fallbackText);
+                utter.rate = rate;
+                utter.pitch = pitch;
+
+                // Prefer natural English voice if available
+                const voices = window.speechSynthesis.getVoices();
+                const preferred = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Samantha') || v.name.includes('Google') || v.name.includes('Natural')));
+                if (preferred) utter.voice = preferred;
+
+                window.speechSynthesis.speak(utter);
+            }
+        }
+
+        /********************************************************************
+         * 5. LEVEL & MODE NAVIGATION LOGIC
+         ********************************************************************/
+        function getSoundsForCurrentLevel() {
+            if (appState.currentLevel <= 2) {
+                return PHONICS_SOUNDS.filter(s => s.level === 1);
+            } else {
+                return PHONICS_SOUNDS;
+            }
+        }
+
+        function getWordsForCurrentLevel() {
+            if (appState.currentLevel === 1) {
+                return BLEND_WORDS.filter(w => w.level === 2);
+            } else if (appState.currentLevel === 2) {
+                return BLEND_WORDS.filter(w => w.level === 2);
+            } else if (appState.currentLevel === 3) {
+                return BLEND_WORDS.filter(w => w.level === 3);
+            } else {
+                return BLEND_WORDS.filter(w => w.level === 4);
+            }
+        }
+
+        function selectLevel(lvl) {
+            playSoundEffect('pop');
+            appState.currentLevel = lvl;
+            appState.explorerIndex = 0;
+            appState.blendIndex = 0;
+
+            // Update level pill styles
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById(`lvlBtn-${i}`);
+                if (i === lvl) {
+                    btn.className = 'toy-btn px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-bold bg-orange-500 text-white shadow-sm whitespace-nowrap';
+                } else {
+                    btn.className = 'toy-btn px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 whitespace-nowrap';
+                }
+            }
+
+            // Automatically switch to the ideal mode for that level
+            if (lvl === 1 && appState.currentMode === 'blend') {
+                switchMode('explorer');
+            } else if (lvl >= 2 && appState.currentMode === 'explorer') {
+                switchMode('blend');
+            } else {
+                refreshActiveMode();
+            }
+            saveState();
+        }
+
+        function switchMode(mode) {
+            playSoundEffect('pop');
+            appState.currentMode = mode;
+
+            const modes = ['explorer', 'blend', 'detective', 'stickers'];
+            modes.forEach(m => {
+                const sec = document.getElementById(`mode-${m}`);
+                const navBtn = document.getElementById(`navBtn-${m}`);
+                if (m === mode) {
+                    sec.classList.remove('hidden');
+                    sec.classList.add('flex');
+                    navBtn.className = 'toy-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-3xl bg-orange-500 text-white font-bold shadow-[0_5px_0_#C2410C]';
+                } else {
+                    sec.classList.add('hidden');
+                    sec.classList.remove('flex');
+                    navBtn.className = 'toy-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-3xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold';
+                }
+            });
+
+            refreshActiveMode();
+        }
+
+        function refreshActiveMode() {
+            if (appState.currentMode === 'explorer') {
+                renderExplorer();
+            } else if (appState.currentMode === 'blend') {
+                renderBlend();
+            } else if (appState.currentMode === 'detective') {
+                startNewDetectiveRound();
+            } else if (appState.currentMode === 'stickers') {
+                renderStickers();
+            }
+            updateQuickMicButton();
+        }
+
+        function toggleOrthographyMarks() {
+            playSoundEffect('pop');
+            appState.showOrthoMarks = !appState.showOrthoMarks;
+            const btn = document.getElementById('orthoToggleBtn');
+            btn.textContent = `Cue Marks: ${appState.showOrthoMarks ? 'ON' : 'OFF'}`;
+            refreshActiveMode();
+            saveState();
+        }
+
+        function updateHeaderUI() {
+            document.getElementById('starCountDisplay').textContent = appState.stars;
+            const stickerTotal = document.getElementById('stickerStarTotal');
+            if (stickerTotal) stickerTotal.textContent = appState.stars;
+
+            const companion = COMPANION_STICKERS.find(c => c.id === appState.activeCompanion) || COMPANION_STICKERS[0];
+            document.getElementById('companionAvatarBtn').textContent = companion.emoji;
+            document.getElementById('companionNameLabel').textContent = companion.name;
+        }
+
+        function addStars(amount, itemKey = null) {
+            appState.stars += amount;
+            if (itemKey) {
+                appState.masteredItems[itemKey] = (appState.masteredItems[itemKey] || 0) + 1;
+            }
+            saveState();
+            triggerConfettiBurst();
+            syncProgressToWebhookIfConfigured();
+        }
+
+        /********************************************************************
+         * 6. MODE 1: SOUND EXPLORER LOGIC
+         ********************************************************************/
+        function renderExplorer() {
+            const sounds = getSoundsForCurrentLevel();
+            if (appState.explorerIndex >= sounds.length) appState.explorerIndex = 0;
+            const current = sounds[appState.explorerIndex];
+
+            // Badge
+            const typeBadge = document.getElementById('explorerSoundTypeBadge');
+            if (current.type === 'continuous') {
+                typeBadge.className = 'px-3.5 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                typeBadge.textContent = '🌊 Continuous Sound — Hold for 3 seconds!';
+            } else {
+                typeBadge.className = 'px-3.5 py-1 rounded-full text-xs sm:text-sm font-bold bg-amber-100 text-amber-800 border border-amber-300';
+                typeBadge.textContent = '⚡ Quick Bouncy Sound — Do not add "uh"!';
+            }
+
+            document.getElementById('explorerProgressLabel').textContent = `Sound ${appState.explorerIndex + 1} of ${sounds.length}`;
+
+            // Letter display with optional macron
+            const letterEl = document.getElementById('explorerLetterDisplay');
+            letterEl.innerHTML = appState.showOrthoMarks ? current.displayHtml : (current.plainHtml || current.symbol);
+
+            // Orthography Sub-Cue (Arrow with dot)
+            const orthoCue = document.getElementById('explorerOrthoCue');
+            orthoCue.style.visibility = appState.showOrthoMarks ? 'visible' : 'hidden';
+
+            // Custom voice badge
+            const customBadge = document.getElementById('customVoiceBadgeExplorer');
+            if (customAudioCache[current.id]) {
+                customBadge.classList.remove('hidden');
+            } else {
+                customBadge.classList.add('hidden');
+            }
+
+            // Mnemonic & Mouth cues
+            document.getElementById('explorerEmoji').textContent = current.emoji;
+            document.getElementById('explorerKeyword').textContent = current.keyword;
+            document.getElementById('explorerPhoneticText').textContent = current.spokenCue;
+            document.getElementById('explorerMouthCue').innerHTML = current.mouthCue;
+            document.getElementById('coPilotScript').textContent = current.parentScript;
+
+            // Render bottom selector strip
+            const strip = document.getElementById('explorerItemStrip');
+            strip.innerHTML = '';
+            sounds.forEach((s, idx) => {
+                const btn = document.createElement('button');
+                const isActive = idx === appState.explorerIndex;
+                const isMastered = appState.masteredItems[s.id] > 0;
+                btn.className = `toy-btn reading-font w-12 h-12 sm:w-14 sm:h-14 rounded-2xl font-bold text-xl sm:text-2xl flex items-center justify-center relative border-2 ${
+                    isActive
+                        ? 'bg-orange-500 text-white border-orange-600 shadow-[0_4px_0_#C2410C] scale-110'
+                        : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                }`;
+                btn.innerHTML = appState.showOrthoMarks ? s.displayHtml : (s.plainHtml || s.symbol);
+                if (isMastered) {
+                    const star = document.createElement('span');
+                    star.className = 'absolute -top-1.5 -right-1.5 text-xs';
+                    star.textContent = '⭐';
+                    btn.appendChild(star);
+                }
+                btn.onclick = () => {
+                    appState.explorerIndex = idx;
+                    renderExplorer();
+                    playCurrentExplorerSound();
+                };
+                strip.appendChild(btn);
+            });
+
+            updateQuickMicButton();
+        }
+
+        function playCurrentExplorerSound() {
+            const sounds = getSoundsForCurrentLevel();
+            const current = sounds[appState.explorerIndex];
+            const card = document.getElementById('giantLetterCard');
+            card.classList.remove('scale-105');
+            void card.offsetWidth;
+            card.classList.add('scale-105');
+            setTimeout(() => card.classList.remove('scale-105'), 250);
+
+            playAudioForItem(current.id, current.phoneticTTS, current.type === 'continuous' ? 0.65 : 0.9, 1.05);
+        }
+
+        function celebrateExplorerMastery() {
+            const sounds = getSoundsForCurrentLevel();
+            const current = sounds[appState.explorerIndex];
+            playSoundEffect('fanfare');
+            addStars(1, current.id);
+
+            setTimeout(() => {
+                appState.explorerIndex = (appState.explorerIndex + 1) % sounds.length;
+                renderExplorer();
+            }, 650);
+        }
+
+        /********************************************************************
+         * 7. MODE 2: SLIDE & BLEND ENGINE
+         ********************************************************************/
+        let lastTriggeredLetterIdx = -1;
+        let autoBlendInterval = null;
+
+        function renderBlend() {
+            const words = getWordsForCurrentLevel();
+            if (appState.blendIndex >= words.length) appState.blendIndex = 0;
+            const current = words[appState.blendIndex];
+
+            document.getElementById('blendProgressLabel').textContent = `${appState.blendIndex + 1} / ${words.length}`;
+            document.getElementById('coPilotScript').textContent = current.parentScript;
+
+            // Hide reveal box until blended
+            const revealCard = document.getElementById('blendRevealCard');
+            revealCard.classList.add('hidden');
+
+            // Reset slider to 0
+            const slider = document.getElementById('blendSlider');
+            slider.value = 0;
+            updateSliderThumbPosition(0);
+            lastTriggeredLetterIdx = -1;
+
+            // Build letter nodes
+            const container = document.getElementById('blendWordContainer');
+            container.innerHTML = '';
+
+            current.letters.forEach((letObj, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.id = `blendLet-${idx}`;
+                wrapper.className = `blend-letter cursor-pointer select-none px-1 sm:px-2`;
+                wrapper.onclick = () => {
+                    highlightSingleBlendLetter(idx);
+                    speakBlendSegment(letObj);
+                };
+
+                const charDiv = document.createElement('div');
+                const fontSizeClass = current.isSentence ? 'text-4xl sm:text-6xl' : 'text-6xl sm:text-8xl';
+                charDiv.className = `reading-font ${fontSizeClass} font-bold leading-none`;
+                charDiv.innerHTML = (appState.showOrthoMarks && letObj.displayHtml) ? letObj.displayHtml : letObj.char;
+
+                wrapper.appendChild(charDiv);
+
+                // 100 Easy Lessons Sub-Letter Dot / Loop Cue
+                if (appState.showOrthoMarks && letObj.ortho !== 'silent') {
+                    const cue = document.createElement('div');
+                    cue.className = 'mt-3 flex items-center justify-center';
+                    if (letObj.ortho === 'continuous') {
+                        cue.innerHTML = `<div class="w-4 h-4 rounded-full bg-emerald-500 shadow-sm" title="Hold this sound!"></div>`;
+                    } else {
+                        cue.innerHTML = `<div class="w-3.5 h-3.5 rotate-45 bg-amber-500 shadow-sm" title="Quick bouncy sound!"></div>`;
+                    }
+                    wrapper.appendChild(cue);
+                } else if (appState.showOrthoMarks && letObj.ortho === 'silent') {
+                    const cue = document.createElement('div');
+                    cue.className = 'mt-3 h-4';
+                    wrapper.appendChild(cue);
+                }
+
+                container.appendChild(wrapper);
+            });
+
+            // Build bottom word selector strip
+            const strip = document.getElementById('blendWordStrip');
+            strip.innerHTML = '';
+            words.forEach((w, idx) => {
+                const btn = document.createElement('button');
+                const isActive = idx === appState.blendIndex;
+                const isDone = appState.masteredItems[w.id] > 0;
+                btn.className = `toy-btn reading-font px-3.5 py-2 rounded-2xl font-bold text-sm sm:text-base border-2 flex items-center gap-1 ${
+                    isActive
+                        ? 'bg-orange-500 text-white border-orange-600 shadow-[0_4px_0_#C2410C]'
+                        : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                }`;
+                btn.innerHTML = `<span>${w.word}</span> ${isDone ? '<span>⭐</span>' : ''}`;
+                btn.onclick = () => {
+                    appState.blendIndex = idx;
+                    renderBlend();
+                };
+                strip.appendChild(btn);
+            });
+
+            updateQuickMicButton();
+        }
+
+        function updateSliderThumbPosition(val) {
+            const thumb = document.getElementById('sliderThumbVisual');
+            const pct = Math.max(0, Math.min(100, Number(val)));
+            // Keep thumb within track bounds
+            thumb.style.left = `calc(${pct}% - ${(pct / 100) * 56}px)`;
+        }
+
+        function highlightSingleBlendLetter(activeIndex) {
+            const words = getWordsForCurrentLevel();
+            const current = words[appState.blendIndex];
+            current.letters.forEach((_, idx) => {
+                const el = document.getElementById(`blendLet-${idx}`);
+                if (!el) return;
+                el.classList.remove('active-letter', 'passed-letter');
+                if (idx === activeIndex) {
+                    el.classList.add('active-letter');
+                } else if (idx < activeIndex) {
+                    el.classList.add('passed-letter');
+                }
+            });
+        }
+
+        function speakBlendSegment(letObj) {
+            if (letObj.ortho === 'silent') return;
+            if (letObj.spokenWord) {
+                playAudioForItem(`word_${letObj.spokenWord}`, letObj.spokenWord, 0.85, 1.05);
+                return;
+            }
+            if (letObj.soundId) {
+                const soundObj = PHONICS_SOUNDS.find(s => s.id === letObj.soundId);
+                if (soundObj) {
+                    playAudioForItem(soundObj.id, soundObj.phoneticTTS, 0.75, 1.05);
+                }
+            }
+        }
+
+        function handleBlendSlide(val) {
+            const numVal = Number(val);
+            updateSliderThumbPosition(numVal);
+
+            const words = getWordsForCurrentLevel();
+            const current = words[appState.blendIndex];
+            const totalLetters = current.letters.length;
+
+            if (numVal < 5) {
+                highlightSingleBlendLetter(-1);
+                lastTriggeredLetterIdx = -1;
+                return;
+            }
+
+            // Map 5..95 to letter indices
+            const idx = Math.min(
+                totalLetters - 1,
+                Math.floor(((numVal - 5) / 90) * totalLetters)
+            );
+
+            if (idx !== lastTriggeredLetterIdx && idx >= 0) {
+                lastTriggeredLetterIdx = idx;
+                highlightSingleBlendLetter(idx);
+                speakBlendSegment(current.letters[idx]);
+            }
+        }
+
+        function handleBlendRelease(val) {
+            if (Number(val) >= 88) {
+                // Child slid all the way to the end of the arrow!
+                const subtext = document.getElementById('blendInstructionSubtext');
+                subtext.innerHTML = `Awesome sliding! Now tap <span class="text-emerald-600 font-extrabold">"⚡ Say It Fast!"</span>`;
+                playSoundEffect('chime');
+            }
+        }
+
+        function autoAnimateSlowBlend() {
+            if (autoBlendInterval) clearInterval(autoBlendInterval);
+            const slider = document.getElementById('blendSlider');
+            slider.value = 0;
+            lastTriggeredLetterIdx = -1;
+
+            let v = 0;
+            autoBlendInterval = setInterval(() => {
+                v += 2.5;
+                slider.value = v;
+                handleBlendSlide(v);
+                if (v >= 96) {
+                    clearInterval(autoBlendInterval);
+                    handleBlendRelease(100);
+                }
+            }, 45);
+        }
+
+        function triggerSayItFast() {
+            if (autoBlendInterval) clearInterval(autoBlendInterval);
+            const words = getWordsForCurrentLevel();
+            const current = words[appState.blendIndex];
+
+            // Light up all letters green
+            current.letters.forEach((_, idx) => {
+                const el = document.getElementById(`blendLet-${idx}`);
+                if (el) {
+                    el.classList.remove('active-letter');
+                    el.classList.add('passed-letter', 'scale-110');
+                    setTimeout(() => el.classList.remove('scale-110'), 400);
+                }
+            });
+
+            // Speak the complete blended word or sentence
+            playAudioForItem(current.id, current.word, 0.9, 1.1);
+            playSoundEffect('fanfare');
+
+            // Reveal illustration card
+            const revealCard = document.getElementById('blendRevealCard');
+            document.getElementById('blendRevealEmoji').textContent = current.emoji;
+            document.getElementById('blendRevealText').textContent = current.meaning;
+            revealCard.classList.remove('hidden');
+
+            // Award star
+            addStars(1, current.id);
+        }
+
+        function prevBlendItem() {
+            playSoundEffect('pop');
+            const words = getWordsForCurrentLevel();
+            appState.blendIndex = (appState.blendIndex - 1 + words.length) % words.length;
+            renderBlend();
+        }
+
+        function nextBlendItem() {
+            playSoundEffect('pop');
+            const words = getWordsForCurrentLevel();
+            appState.blendIndex = (appState.blendIndex + 1) % words.length;
+            renderBlend();
+        }
+
+        /********************************************************************
+         * 8. MODE 3: SOUND DETECTIVE (LISTENING GAME)
+         ********************************************************************/
+        function startNewDetectiveRound() {
+            const feedbackEl = document.getElementById('detectiveFeedback');
+            feedbackEl.textContent = '';
+
+            // Decide pool based on current level
+            let pool = [];
+            if (appState.currentLevel === 1) {
+                pool = PHONICS_SOUNDS.filter(s => s.level === 1).map(s => ({
+                    id: s.id,
+                    display: appState.showOrthoMarks ? s.displayHtml : s.symbol,
+                    emoji: s.emoji,
+                    spokenPrompt: s.phoneticTTS,
+                    labelForTitle: s.spokenCue
+                }));
+            } else {
+                const words = getWordsForCurrentLevel();
+                pool = words.map(w => ({
+                    id: w.id,
+                    display: w.word,
+                    emoji: w.emoji,
+                    spokenPrompt: w.word,
+                    labelForTitle: `"${w.word}"`
+                }));
+            }
+
+            // Pick 3 distinct choices
+            const shuffled = [...pool].sort(() => Math.random() - 0.5);
+            const choices = shuffled.slice(0, Math.min(3, shuffled.length));
+            const target = choices[Math.floor(Math.random() * choices.length)];
+            appState.detectiveTarget = target;
+
+            document.getElementById('detectivePromptTitle').innerHTML = `Tap the card that says <span class="text-purple-600 underline decoration-wavy">${target.labelForTitle}</span>!`;
+            document.getElementById('coPilotScript').textContent = `Listen to the sound together, then encourage your child to hunt for ${target.labelForTitle} among the 3 cards!`;
+
+            const grid = document.getElementById('detectiveChoicesGrid');
+            grid.innerHTML = '';
+
+            choices.forEach(choice => {
+                const card = document.createElement('button');
+                card.className = 'toy-btn bg-gradient-to-b from-slate-50 to-indigo-50/60 hover:from-amber-50 hover:to-amber-100/70 border-4 border-indigo-200 rounded-[2rem] p-6 sm:p-8 shadow-[0_8px_0_#C7D2FE] flex flex-col items-center justify-center gap-3 cursor-pointer';
+                card.innerHTML = `
+                    <div class="reading-font text-5xl sm:text-6xl font-bold text-slate-800">${choice.display}</div>
+                    <div class="text-3xl opacity-80">${choice.emoji}</div>
+                `;
+                card.onclick = () => checkDetectiveAnswer(choice, card);
+                grid.appendChild(card);
+            });
+
+            setTimeout(() => playDetectiveTargetAudio(), 300);
+            updateQuickMicButton();
+        }
+
+        function playDetectiveTargetAudio() {
+            if (!appState.detectiveTarget) return;
+            playAudioForItem(appState.detectiveTarget.id, appState.detectiveTarget.spokenPrompt, 0.8, 1.08);
+        }
+
+        function checkDetectiveAnswer(choice, cardEl) {
+            const feedbackEl = document.getElementById('detectiveFeedback');
+            if (choice.id === appState.detectiveTarget.id) {
+                playSoundEffect('fanfare');
+                cardEl.className = 'toy-btn bg-emerald-100 border-4 border-emerald-500 rounded-[2rem] p-6 sm:p-8 shadow-[0_8px_0_#15803D] flex flex-col items-center justify-center gap-3 scale-105 transition';
+                appState.detectiveStreak += 1;
+                document.getElementById('detectiveStreakBadge').textContent = `🔥 Streak: ${appState.detectiveStreak}`;
+                feedbackEl.textContent = '🎉 Spot on, Super Detective! +1 ⭐';
+                feedbackEl.className = 'h-8 text-lg font-bold text-emerald-600 animate-bounce';
+                addStars(1, choice.id);
+
+                setTimeout(() => {
+                    startNewDetectiveRound();
+                }, 1300);
+            } else {
+                playSoundEffect('gentleTryAgain');
+                appState.detectiveStreak = 0;
+                document.getElementById('detectiveStreakBadge').textContent = `🔥 Streak: 0`;
+                cardEl.classList.add('opacity-40');
+                feedbackEl.textContent = '👂 Listen one more time and try again!';
+                feedbackEl.className = 'h-8 text-base font-bold text-amber-600';
+                playDetectiveTargetAudio();
+            }
+        }
+
+        /********************************************************************
+         * 9. MODE 4: STICKER BOOK & REWARDS
+         ********************************************************************/
+        function renderStickers() {
+            document.getElementById('stickerStarTotal').textContent = appState.stars;
+            document.getElementById('coPilotScript').textContent = 'Celebrate your child\'s hard work! Let them choose their favorite unlocked Reading Buddy for the top corner.';
+
+            const grid = document.getElementById('stickerGrid');
+            grid.innerHTML = '';
+
+            COMPANION_STICKERS.forEach(buddy => {
+                const isUnlocked = appState.stars >= buddy.starsNeeded;
+                const isSelected = appState.activeCompanion === buddy.id;
+
+                const card = document.createElement('button');
+                card.className = `toy-btn rounded-3xl p-4 flex flex-col items-center text-center border-4 transition relative ${
+                    isSelected
+                        ? 'bg-amber-100 border-amber-400 shadow-[0_6px_0_#D97706]'
+                        : isUnlocked
+                        ? 'bg-white border-emerald-300 shadow-[0_6px_0_#6EE7B7] hover:bg-emerald-50'
+                        : 'bg-slate-100 border-slate-200 opacity-65 cursor-not-allowed'
+                }`;
+
+                card.innerHTML = `
+                    ${isSelected ? '<span class="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">ACTIVE</span>' : ''}
+                    <div class="text-5xl sm:text-6xl my-2 ${isUnlocked ? 'animate-float' : 'grayscale'}">${buddy.emoji}</div>
+                    <div class="font-bold text-sm sm:text-base text-slate-800">${buddy.name}</div>
+                    <div class="text-xs text-slate-500 mt-1">${buddy.desc}</div>
+                    <div class="mt-3 text-xs font-bold px-3 py-1 rounded-full ${
+                        isUnlocked ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                    }">
+                        ${isUnlocked ? '✓ Unlocked!' : `🔒 Unlock at ${buddy.starsNeeded} ⭐`}
+                    </div>
+                `;
+
+                if (isUnlocked) {
+                    card.onclick = () => {
+                        playSoundEffect('chime');
+                        appState.activeCompanion = buddy.id;
+                        saveState();
+                        renderStickers();
+                    };
+                }
+                grid.appendChild(card);
+            });
+        }
+
+        /********************************************************************
+         * 10. PARENT STUDIO MODAL & WEBHOOK SYNC
+         ********************************************************************/
+        function openParentModal() {
+            playSoundEffect('pop');
+            const modal = document.getElementById('parentModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('webhookUrlInput').value = appState.webhookUrl || '';
+            renderVoiceStudioGrid();
+        }
+
+        function closeParentModal() {
+            playSoundEffect('pop');
+            const modal = document.getElementById('parentModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderVoiceStudioGrid() {
+            const grid = document.getElementById('voiceStudioGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            // Combine all sounds + key words for easy 1-tap recording
+            const items = [
+                ...PHONICS_SOUNDS.map(s => ({
+                    id: s.id,
+                    title: `Sound "${s.symbol}"`,
+                    subtitle: s.voiceGuide,
+                    fallback: s.phoneticTTS
+                })),
+                ...BLEND_WORDS.map(w => ({
+                    id: w.id,
+                    title: `Word "${w.word}"`,
+                    subtitle: w.meaning,
+                    fallback: w.word
+                }))
+            ];
+
+            items.forEach(item => {
+                const hasCustom = Boolean(customAudioCache[item.id]);
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-2 bg-slate-50 border-2 border-slate-200 rounded-2xl p-3';
+                row.innerHTML = `
+                    <div class="min-w-0">
+                        <div class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                            <span>${item.title}</span>
+                            ${hasCustom ? '<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full">Recorded ✓</span>' : ''}
+                        </div>
+                        <div class="text-xs text-slate-500 truncate" title="${item.subtitle}">${item.subtitle}</div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button class="bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold px-2.5 py-1.5 rounded-xl text-xs" title="Play current audio">
+                            🔊 Play
+                        </button>
+                        <button class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs">
+                            🎙️ ${hasCustom ? 'Redo' : 'Record'}
+                        </button>
+                    </div>
+                `;
+
+                const [playBtn, recBtn] = row.querySelectorAll('button');
+                playBtn.onclick = () => playAudioForItem(item.id, item.fallback);
+                recBtn.onclick = () => toggleRecordForItem(item.id, recBtn);
+
+                grid.appendChild(row);
+            });
+        }
+
+        function awardBonusStar() {
+            addStars(5);
+            playSoundEffect('fanfare');
+            renderStickers();
+        }
+
+        async function saveWebhookAndSync() {
+            const url = document.getElementById('webhookUrlInput').value.trim();
+            appState.webhookUrl = url;
+            saveState();
+
+            const msg = document.getElementById('webhookStatusMsg');
+            if (!url) {
+                msg.textContent = '✓ Saved local-only mode.';
+                return;
+            }
+            msg.textContent = 'Syncing with Google Sheets webhook...';
+            const ok = await syncProgressToWebhookIfConfigured();
+            msg.textContent = ok
+                ? '✓ Synced stars & mastered items to Google Sheets!'
+                : '✓ Saved URL! (Progress will sync quietly in the background.)';
+        }
+
+        async function syncProgressToWebhookIfConfigured() {
+            if (!appState.webhookUrl) return false;
+            try {
+                await fetch(appState.webhookUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        timestamp: new Date().toISOString(),
+                        stars: appState.stars,
+                        currentLevel: appState.currentLevel,
+                        activeCompanion: appState.activeCompanion,
+                        masteredItems: appState.masteredItems
+                    })
+                });
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        /********************************************************************
+         * 11. CONFETTI CELEBRATION ENGINE
+         ********************************************************************/
+        const confettiCanvas = document.getElementById('confettiCanvas');
+        const cCtx = confettiCanvas.getContext('2d');
+        let confettiParticles = [];
+        let confettiAnimId = null;
+
+        function resizeConfettiCanvas() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeConfettiCanvas);
+        resizeConfettiCanvas();
+
+        function triggerConfettiBurst() {
+            const colors = ['#F97316', '#FACC15', '#22C55E', '#38BDF8', '#EC4899', '#A855F7'];
+            for (let i = 0; i < 55; i++) {
+                confettiParticles.push({
+                    x: window.innerWidth / 2 + (Math.random() - 0.5) * 180,
+                    y: window.innerHeight * 0.45,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: -Math.random() * 14 - 4,
+                    size: Math.random() * 9 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    vRot: (Math.random() - 0.5) * 12,
+                    life: 1
+                });
+            }
+            if (!confettiAnimId) animateConfetti();
+        }
+
+        function animateConfetti() {
+            cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confettiParticles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.42; // gravity
+                p.rot += p.vRot;
+                p.life -= 0.014;
+
+                cCtx.save();
+                cCtx.translate(p.x, p.y);
+                cCtx.rotate((p.rot * Math.PI) / 180);
+                cCtx.globalAlpha = Math.max(0, p.life);
+                cCtx.fillStyle = p.color;
+                cCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                cCtx.restore();
+            });
+
+            confettiParticles = confettiParticles.filter(p => p.life > 0 && p.y < confettiCanvas.height + 40);
+            if (confettiParticles.length > 0) {
+                confettiAnimId = requestAnimationFrame(animateConfetti);
+            } else {
+                confettiAnimId = null;
+                cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            }
+        }
+
+        /********************************************************************
+         * 12. INITIALIZATION ON WINDOW LOAD
+         ********************************************************************/
+        window.onload = async function () {
+            loadSavedState();
+            await initVoiceDB();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+            }
+            selectLevel(appState.currentLevel || 1);
+            switchMode(appState.currentMode || 'explorer');
+        };
+    </script>
+</body>
+</html>
