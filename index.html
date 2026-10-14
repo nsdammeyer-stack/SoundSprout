@@ -61,7 +61,6 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    /* Custom Slider Styling */
     input[type=range].blend-slider {
       -webkit-appearance: none;
       appearance: none;
@@ -84,48 +83,51 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.25);
       cursor: pointer;
     }
-    @keyframes popIn {
-      0% { transform: scale(0.85); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .animate-pop {
-      animation: popIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
   </style>
 </head>
 <body class="text-slate-800 pb-28">
 
-  <!-- TOP HEADER & NAVIGATION (Responsive for Portrait & Landscape) -->
-  <header class="max-w-4xl mx-auto px-3 pt-3 pb-2 space-y-2.5">
+  <!-- TOP HEADER & NAVIGATION -->
+  <header class="max-w-4xl mx-auto px-3 pt-3 pb-2 space-y-2">
     
-    <!-- Row 1: Logo + Status/Action Controls -->
-    <div class="flex items-center justify-between gap-2">
+    <!-- Row 1: Logo + Profile Pill + Status/Action Controls -->
+    <div class="flex flex-wrap items-center justify-between gap-2">
       <!-- Buddy & Brand -->
-      <div class="flex items-center gap-2.5 bg-white px-3.5 py-2 rounded-2xl shadow-sm border-2 border-slate-100 shrink-0">
-        <span id="headerBuddyEmoji" class="text-3xl sm:text-4xl select-none">🦖</span>
+      <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-2xl shadow-sm border-2 border-slate-100 shrink-0">
+        <span id="headerBuddyEmoji" class="text-2xl sm:text-3xl select-none">🦖</span>
         <div class="leading-tight">
-          <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-orange-500 via-pink-500 to-indigo-600 bg-clip-text text-transparent">
+          <h1 class="text-base sm:text-lg font-bold bg-gradient-to-r from-orange-500 via-pink-500 to-indigo-600 bg-clip-text text-transparent">
             SoundSprout
           </h1>
-          <p id="headerBuddyName" class="text-[11px] sm:text-xs text-slate-500 font-medium">Rex the Reading Dino</p>
+          <p id="headerBuddyName" class="text-[10px] sm:text-xs text-slate-500 font-medium">Rex the Reading Dino</p>
         </div>
       </div>
 
-      <!-- Right Controls: Cloud + Stars + Parent Studio -->
+      <!-- Right Controls: Profile Switcher + Cloud + Stars + Studio -->
       <div class="flex items-center gap-1.5 sm:gap-2">
-        <button onclick="openParentStudio()" id="cloudBadgeBtn" title="Cloud Sync Status" class="flex items-center gap-1 px-2.5 py-2 rounded-full bg-emerald-50 border-2 border-emerald-300 text-emerald-700 text-xs font-bold shadow-sm">
+        <!-- Active Profile Button -->
+        <button onclick="openProfileModal()" class="toy-btn flex items-center gap-1.5 bg-sky-100 hover:bg-sky-200 text-sky-900 font-bold px-2.5 py-1.5 rounded-full border-2 border-sky-300 text-xs sm:text-sm">
+          <span id="activeProfileIcon">👦</span>
+          <span id="activeProfileName" class="max-w-[72px] sm:max-w-[110px] truncate">Reid</span>
+          <span class="text-[10px] opacity-70">▼</span>
+        </button>
+
+        <!-- Cloud Status -->
+        <button onclick="openParentStudio()" id="cloudBadgeBtn" title="Cloud Sync Status" class="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-emerald-50 border-2 border-emerald-300 text-emerald-700 text-xs font-bold shadow-sm">
           <span id="cloudIcon">☁️</span>
           <span id="cloudText" class="hidden md:inline">Synced</span>
         </button>
 
-        <button onclick="switchMode('stickers')" class="toy-btn flex items-center gap-1 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-3 py-1.5 rounded-full border-2 border-amber-500 text-sm sm:text-base">
+        <!-- Star Counter -->
+        <button onclick="switchMode('stickers')" class="toy-btn flex items-center gap-1 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-2.5 py-1.5 rounded-full border-2 border-amber-500 text-xs sm:text-sm">
           <span>⭐</span>
-          <span id="starCountDisplay">3</span>
+          <span id="starCountDisplay">0</span>
         </button>
 
-        <button onclick="openParentStudio()" class="toy-btn flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full border-2 border-indigo-700 text-xs sm:text-sm">
+        <!-- Studio Button -->
+        <button onclick="openParentStudio()" class="toy-btn flex items-center gap-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-2.5 py-1.5 sm:px-3 rounded-full border-2 border-indigo-700 text-xs sm:text-sm">
           <span>🎙️</span>
-          <span class="hidden xs:inline sm:inline">Studio</span>
+          <span class="hidden sm:inline">Studio</span>
         </button>
       </div>
     </div>
@@ -146,34 +148,31 @@
       </button>
     </div>
 
-    <!-- Row 3: Parent Co-Pilot Banner (Stacks cleanly on Portrait, Horizontal on Landscape/Desktop) -->
-    <div class="bg-indigo-950 text-white rounded-2xl p-3 sm:px-4 sm:py-3 shadow-md border-2 border-indigo-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+    <!-- Row 3: Parent Co-Pilot Banner -->
+    <div class="bg-indigo-950 text-white rounded-2xl p-3 sm:px-4 sm:py-3 shadow-md border-2 border-indigo-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
       <div class="flex items-center justify-between sm:justify-start gap-2">
         <span class="bg-indigo-500/90 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0">
           Parent Co-Pilot
         </span>
-        <!-- Action Buttons visible on top-right in portrait, far-right in landscape -->
         <div class="flex items-center gap-1.5 sm:hidden">
           <button onclick="toggleMacrons()" id="cueToggleBtnMobile" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-800 hover:bg-indigo-700 text-indigo-100 border border-indigo-600">
             Cue Marks: ON
           </button>
-          <button onclick="quickRecordCurrent()" class="toy-btn text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center gap-1">
+          <button onclick="quickRecordCurrent(this)" class="toy-btn text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center gap-1">
             <span>🎙️</span> Record
           </button>
         </div>
       </div>
 
-      <!-- Parent Script Prompt Text (Full width on mobile!) -->
       <p id="parentScriptText" class="text-xs sm:text-sm text-indigo-100 leading-snug flex-1 sm:px-2">
         Point to the letter. Say: "Here is a new sound! My turn to say it slowly: mmmmm. Now say it with me!"
       </p>
 
-      <!-- Desktop / Landscape Action Buttons -->
       <div class="hidden sm:flex items-center gap-2 shrink-0">
         <button onclick="toggleMacrons()" id="cueToggleBtnDesktop" class="text-xs font-bold px-3 py-1.5 rounded-full bg-indigo-800 hover:bg-indigo-700 text-indigo-100 border border-indigo-600">
           Cue Marks: ON
         </button>
-        <button onclick="quickRecordCurrent()" class="toy-btn text-xs font-bold px-3 py-1.5 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center gap-1.5">
+        <button onclick="quickRecordCurrent(this)" class="toy-btn text-xs font-bold px-3 py-1.5 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center gap-1.5">
           <span>🎙️</span> Record Voice
         </button>
       </div>
@@ -185,7 +184,6 @@
     
     <!-- MODE 1: SOUND EXPLORER -->
     <section id="section-explorer" class="toy-card p-4 sm:p-6 space-y-4">
-      <!-- Top Badge & Item Counter -->
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div id="soundTypeBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
           🌊 Continuous Sound — Hold for 3 seconds!
@@ -203,13 +201,9 @@
       <!-- Giant Interactive Letter / Word Card -->
       <div class="flex flex-col items-center justify-center py-2">
         <button onclick="playCurrentExplorerItem()" id="explorerBigCard" class="phoneme-box w-full max-w-xs sm:max-w-sm min-h-[190px] sm:min-h-[220px] flex flex-col items-center justify-center p-4 transition-all relative">
-          
-          <!-- Display Text -->
           <div id="explorerDisplay" class="reader-font text-7xl sm:text-8xl font-bold text-slate-900 tracking-wide select-none my-2">
             m
           </div>
-
-          <!-- 100 Easy Lessons Starting Dot & Arrow Cue -->
           <div id="orthographyArrow" class="w-36 sm:w-44 h-6 flex items-center justify-center mt-1">
             <svg viewBox="0 0 180 28" class="w-full h-full">
               <circle cx="16" cy="14" r="9" fill="#EF4444" />
@@ -217,7 +211,6 @@
               <polygon points="148,5 170,14 148,23" fill="#1E293B" />
             </svg>
           </div>
-
           <span class="text-xs font-bold text-amber-700/80 mt-2">
             👆 Tap card to hear sound!
           </span>
@@ -226,24 +219,18 @@
 
       <!-- Mouth Tip & Helper Text -->
       <div class="bg-slate-50 rounded-2xl p-3 border-2 border-slate-100 text-center space-y-1">
-        <p id="explorerMouthTip" class="text-sm sm:text-base font-bold text-slate-700">
-          👄 Press lips together and hum: "mmmmmm" (like yummy food!)
-        </p>
-        <p id="explorerExampleWord" class="text-xs sm:text-sm text-slate-500">
-          As in: <b>m</b>om, <b>m</b>at, <b>m</b>e
-        </p>
+        <p id="explorerMouthTip" class="text-sm sm:text-base font-bold text-slate-700"></p>
+        <p id="explorerExampleWord" class="text-xs sm:text-sm text-slate-500"></p>
       </div>
 
-      <!-- Action Buttons: Prev / Hear Sound / Mastered / Next -->
+      <!-- Action Buttons -->
       <div class="grid grid-cols-4 sm:flex sm:items-center sm:justify-between gap-2 pt-1">
         <button onclick="prevExplorerItem()" class="toy-btn col-span-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-3 sm:px-5 rounded-2xl text-sm sm:text-base">
           ◀ Prev
         </button>
-
         <button onclick="playCurrentExplorerItem()" class="toy-btn col-span-2 sm:flex-1 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold py-3 px-4 rounded-2xl text-sm sm:text-lg flex items-center justify-center gap-1.5 border-2 border-amber-500">
           <span>🔊</span> Hear Sound
         </button>
-
         <button onclick="nextExplorerItem()" class="toy-btn col-span-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-3 sm:px-5 rounded-2xl text-sm sm:text-base">
           Next ▶
         </button>
@@ -251,7 +238,7 @@
 
       <!-- Reward Star Button -->
       <button onclick="markCurrentMastered()" id="masteredBtn" class="toy-btn w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3 rounded-2xl text-base sm:text-lg border-2 border-emerald-600 flex items-center justify-center gap-2">
-        <span>⭐</span> Reid Said It! (+1 Star)
+        <span>⭐</span> <span id="masteredBtnLabel">Reid Said It! (+1 Star)</span>
       </button>
 
       <!-- Quick Item Jump Dots -->
@@ -267,10 +254,8 @@
         <span id="blendCounter" class="text-xs sm:text-sm font-bold text-slate-400">Word 1 of 8</span>
       </div>
 
-      <!-- Segmented Phoneme Tiles -->
       <div id="blendLettersContainer" class="flex items-center justify-center gap-2 sm:gap-4 py-4 min-h-[140px]"></div>
 
-      <!-- Tactile Finger Slider -->
       <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 space-y-2">
         <div class="flex justify-between text-xs font-bold text-slate-500">
           <span>🔴 Start Here (Say it slow...)</span>
@@ -279,13 +264,11 @@
         <input type="range" id="blendSlider" min="0" max="100" value="0" class="blend-slider" oninput="handleBlendSlide(this.value)" onchange="finishBlendSlide(this.value)" />
       </div>
 
-      <!-- Meaning / Emoji Reveal -->
       <div id="blendMeaningBox" class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3 text-center">
         <span id="blendEmoji" class="text-3xl sm:text-4xl">🐱</span>
         <p id="blendMeaningText" class="text-sm sm:text-base font-bold text-amber-900 mt-1">Slide the red dot or tap "Say It Fast!"</p>
       </div>
 
-      <!-- Controls -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <button onclick="prevBlendItem()" class="toy-btn bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-2xl text-sm sm:text-base">
           ◀ Prev
@@ -302,7 +285,7 @@
       </div>
     </section>
 
-    <!-- MODE 3: SOUND DETECTIVE (QUIZ GAME) -->
+    <!-- MODE 3: SOUND DETECTIVE -->
     <section id="section-detective" class="toy-card p-4 sm:p-6 space-y-5 hidden">
       <div class="flex items-center justify-between">
         <span class="px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-purple-100 text-purple-800 border border-purple-300">
@@ -320,7 +303,6 @@
         <p id="detectiveFeedback" class="text-sm font-bold text-emerald-600 min-h-[20px]"></p>
       </div>
 
-      <!-- 3 Big Choice Cards -->
       <div id="detectiveChoices" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"></div>
 
       <button onclick="newDetectiveRound()" class="toy-btn w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-2xl text-sm sm:text-base">
@@ -332,11 +314,11 @@
     <section id="section-stickers" class="toy-card p-4 sm:p-6 space-y-4 hidden">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-lg sm:text-2xl font-bold text-slate-800">🏆 Reid's Reading Buddies</h2>
+          <h2 id="stickerBookHeading" class="text-lg sm:text-2xl font-bold text-slate-800">🏆 Reid's Reading Buddies</h2>
           <p class="text-xs sm:text-sm text-slate-500">Earn stars by practicing sounds and words to unlock buddies!</p>
         </div>
         <div class="bg-amber-100 border-2 border-amber-300 px-3 py-1.5 rounded-2xl font-bold text-amber-900 text-sm">
-          ⭐ <span id="stickerStarTotal">3</span> Stars
+          ⭐ <span id="stickerStarTotal">0</span> Stars
         </div>
       </div>
 
@@ -345,7 +327,7 @@
 
   </main>
 
-  <!-- BOTTOM NAVIGATION BAR (Thumb-Friendly on Portrait & Landscape) -->
+  <!-- BOTTOM NAVIGATION BAR -->
   <nav class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t-2 border-slate-200 px-2 py-2 z-40">
     <div class="max-w-xl mx-auto grid grid-cols-4 gap-1.5">
       <button onclick="switchMode('explorer')" id="navBtn-explorer" class="flex flex-col items-center justify-center py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-sm">
@@ -367,25 +349,65 @@
     </div>
   </nav>
 
+  <!-- PROFILE SWITCHER & CREATOR MODAL -->
+  <div id="profileModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border-4 border-sky-100 overflow-hidden flex flex-col">
+      <div class="bg-sky-900 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold flex items-center gap-2">
+            <span>👥</span> Choose or Create Profile
+          </h3>
+          <p class="text-xs text-sky-200">Each profile has its own stars & progress in Google Sheets</p>
+        </div>
+        <button onclick="closeProfileModal()" class="bg-sky-800 hover:bg-sky-700 text-white w-9 h-9 rounded-full font-bold text-lg">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
+        <!-- Existing Profiles List -->
+        <div id="profileCardsList" class="space-y-2"></div>
+
+        <!-- Create New Profile Form -->
+        <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-3.5 space-y-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">➕ Create a New Profile</h4>
+          <div class="flex gap-2">
+            <select id="newProfileEmoji" class="px-2.5 py-2 rounded-xl border-2 border-slate-200 bg-white text-lg">
+              <option value="👦">👦</option>
+              <option value="🧪">🧪</option>
+              <option value="🦖">🦖</option>
+              <option value="🥷">🥷</option>
+              <option value="🚀">🚀</option>
+              <option value="🐶">🐶</option>
+              <option value="⭐">⭐</option>
+            </select>
+            <input type="text" id="newProfileNameInput" placeholder="Profile name (e.g., Dad Test)" class="flex-1 px-3 py-2 rounded-xl border-2 border-slate-200 text-sm focus:border-sky-500 focus:outline-none bg-white" />
+          </div>
+          <button onclick="createNewProfile()" class="toy-btn w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl text-sm">
+            ➕ Create & Switch Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- PARENT VOICE STUDIO & CLOUD SYNC MODAL -->
   <div id="parentStudioModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border-4 border-indigo-100 max-h-[90vh] flex flex-col overflow-hidden">
-      <!-- Modal Header -->
       <div class="bg-indigo-950 text-white px-5 py-4 flex items-center justify-between">
         <div>
           <h3 class="text-lg font-bold flex items-center gap-2">
             <span>🎙️</span> Parent Voice Studio & Cloud Sync
           </h3>
-          <p class="text-xs text-indigo-200">Record pure phoneme sounds once — syncs to all devices via Google Sheets</p>
+          <p class="text-xs text-indigo-200">Voice clips are shared across all profiles via Google Sheets</p>
         </div>
         <button onclick="closeParentStudio()" class="bg-indigo-800 hover:bg-indigo-700 text-white w-9 h-9 rounded-full font-bold text-lg">
           ✕
         </button>
       </div>
 
-      <!-- Modal Body -->
       <div class="p-4 sm:p-5 overflow-y-auto space-y-5 flex-1">
-        <!-- Cloud Sync Section -->
+        <!-- Cloud Sync & Reset Section -->
         <div class="bg-indigo-50/90 border-2 border-indigo-200 rounded-2xl p-3.5 space-y-2.5">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h4 class="font-bold text-indigo-950 text-sm flex items-center gap-1.5">
@@ -398,8 +420,11 @@
 
           <div class="flex flex-col sm:flex-row gap-2">
             <input type="url" id="webhookUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3 py-2 rounded-xl border-2 border-indigo-200 text-xs sm:text-sm focus:border-indigo-500 focus:outline-none bg-white" />
-            <button onclick="saveWebhookAndSync()" class="toy-btn bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm shrink-0">
+            <button onclick="saveWebhookAndSync()" class="toy-btn bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm shrink-0">
               🔄 Sync Now
+            </button>
+            <button onclick="resetActiveProfileProgress()" class="toy-btn bg-rose-600 hover:bg-rose-500 text-white font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm shrink-0">
+              🗑️ Reset Stars
             </button>
           </div>
           <p id="cloudSyncLog" class="text-[11px] text-indigo-700 font-medium"></p>
@@ -411,7 +436,7 @@
             🎤 Record Custom Phonemes & Words (1.75 sec auto-stop)
           </h4>
           <p class="text-xs text-slate-500">
-            Hold the phone close and make ONLY the pure sound (e.g., <b>"mmmmmm"</b>, not "muh"). Recordings automatically upload to your Google Sheet!
+            Hold the phone close and make ONLY the pure sound (e.g., <b>"mmmmmm"</b>, not "muh"). Uploads directly to the <b>VoiceClips</b> tab!
           </p>
           <div id="studioSoundList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1"></div>
         </div>
@@ -421,12 +446,12 @@
 
   <script>
     // =========================================================================
-    // 1. HARDCODED GOOGLE APPS SCRIPT WEB APP URL (NATHAN'S SHEET)
+    // 1. HARDCODED GOOGLE APPS SCRIPT WEB APP URL
     // =========================================================================
     const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8RatLKyrpQ8PBKFqf896ZA4yUTSI35ZVQTeHwUO2MEzmwx1ZtQGQnqRGcjmZWrFzX/exec";
 
     // =========================================================================
-    // 2. CURRICULUM DATA (100 Easy Lessons Inspired)
+    // 2. CURRICULUM DATA
     // =========================================================================
     const CURRICULUM = {
       1: {
@@ -489,10 +514,10 @@
       4: {
         title: "Level 4: Mini Sentences",
         explorer: [
-          { id: "sen_1", display: "I see Sam.", macronDisplay: 'I sē<span class="silent-letter">e</span> Sam.', type: "continuous", tts: "I see Sam.", mouth: 'Read each word smoothly from left to right!', example: "🐶 Story Sentence #1", parentScript: 'Touch under each word as Reid sounds it out, then read the whole sentence fast!' },
+          { id: "sen_1", display: "I see Sam.", macronDisplay: 'I sē<span class="silent-letter">e</span> Sam.', type: "continuous", tts: "I see Sam.", mouth: 'Read each word smoothly from left to right!', example: "🐶 Story Sentence #1", parentScript: 'Touch under each word as your child sounds it out, then read the whole sentence fast!' },
           { id: "sen_2", display: "Sam sat.", macronDisplay: "Sam sat.", type: "stop", tts: "Sam sat.", mouth: 'Sound out "Sam", then "sat"!', example: "🪑 Story Sentence #2", parentScript: 'Ask after reading: "What did Sam do? He sat!"' },
-          { id: "sen_3", display: "I eat.", macronDisplay: 'I ē<span class="silent-letter">a</span>t.', type: "stop", tts: "I eat.", mouth: 'Remember the silent little a in eat!', example: "🍎 Story Sentence #3", parentScript: 'Cheer big when he reads the whole sentence!' },
-          { id: "sen_4", display: "See the cat.", macronDisplay: 'Sē<span class="silent-letter">e</span> the cat.', type: "stop", tts: "See the cat.", mouth: 'Point to each word as you read!', example: "🐱 Story Sentence #4", parentScript: 'Have Reid tap the card to hear the whole story sentence!' }
+          { id: "sen_3", display: "I eat.", macronDisplay: 'I ē<span class="silent-letter">a</span>t.', type: "stop", tts: "I eat.", mouth: 'Remember the silent little a in eat!', example: "🍎 Story Sentence #3", parentScript: 'Cheer big when they read the whole sentence!' },
+          { id: "sen_4", display: "See the cat.", macronDisplay: 'Sē<span class="silent-letter">e</span> the cat.', type: "stop", tts: "See the cat.", mouth: 'Point to each word as you read!', example: "🐱 Story Sentence #4", parentScript: 'Tap the card to hear the whole story sentence!' }
         ],
         blends: [
           { id: "sen_1", word: "I see Sam", parts: ["I", "see", "Sam"], macronParts: ["I", "sēe", "Sam"], partIds: ["w_see", "w_sam"], emoji: "🐶👀", meaning: "I see Sam the puppy!" },
@@ -511,14 +536,29 @@
     ];
 
     // =========================================================================
-    // 3. STATE & INDEXED-DB VOICE CACHE
+    // 3. MULTI-PROFILE STATE MANAGEMENT
     // =========================================================================
+    function createBlankProfile(name, icon) {
+      return {
+        name: name || "Reader",
+        icon: icon || "👦",
+        stars: 0,
+        buddy: "dino",
+        completed: {},
+        macrons: true,
+        rate: 0.85
+      };
+    }
+
+    let profilesMap = {
+      reid: createBlankProfile("Reid", "👦"),
+      test: createBlankProfile("Dad Test", "🧪")
+    };
+
+    let activeProfileKey = localStorage.getItem("soundsprout_active_profile") || "reid";
+
     let state = {
-      stars: 3,
-      buddy: "dino",
-      completed: {},
-      macrons: true,
-      rate: 0.85,
+      ...profilesMap.reid,
       level: 1,
       mode: "explorer",
       explorerIdx: 0,
@@ -526,7 +566,7 @@
       detectiveTarget: null
     };
 
-    const voiceCache = {}; // { clipId: "data:audio/wav;base64,..." }
+    const voiceCache = {};
 
     function getWebhookUrl() {
       const saved = localStorage.getItem("soundsprout_webhook_url");
@@ -534,28 +574,50 @@
       return DEFAULT_SCRIPT_URL;
     }
 
-    function saveLocalState() {
-      localStorage.setItem("soundsprout_state_v2", JSON.stringify({
+    function saveLocalProfiles() {
+      // Sync current state into profilesMap before saving
+      profilesMap[activeProfileKey] = {
+        name: state.name || profilesMap[activeProfileKey]?.name || "Reader",
+        icon: state.icon || profilesMap[activeProfileKey]?.icon || "👦",
         stars: state.stars,
         buddy: state.buddy,
         completed: state.completed,
         macrons: state.macrons,
         rate: state.rate
-      }));
+      };
+      localStorage.setItem("soundsprout_profiles_v3", JSON.stringify(profilesMap));
+      localStorage.setItem("soundsprout_active_profile", activeProfileKey);
     }
 
-    function loadLocalState() {
+    function loadLocalProfiles() {
       try {
-        const raw = localStorage.getItem("soundsprout_state_v2");
+        const raw = localStorage.getItem("soundsprout_profiles_v3");
         if (raw) {
           const parsed = JSON.parse(raw);
-          state = { ...state, ...parsed };
+          profilesMap = { ...profilesMap, ...parsed };
         }
       } catch (e) {}
+      if (!profilesMap[activeProfileKey]) {
+        activeProfileKey = Object.keys(profilesMap)[0] || "reid";
+      }
+      applyProfileToState(activeProfileKey);
+    }
+
+    function applyProfileToState(profileKey) {
+      activeProfileKey = profileKey;
+      const p = profilesMap[profileKey] || createBlankProfile("Reid", "👦");
+      state.name = p.name || "Reid";
+      state.icon = p.icon || "👦";
+      state.stars = typeof p.stars === "number" ? p.stars : 0;
+      state.buddy = p.buddy || "dino";
+      state.completed = p.completed || {};
+      state.macrons = typeof p.macrons === "boolean" ? p.macrons : true;
+      state.rate = p.rate || 0.85;
+      localStorage.setItem("soundsprout_active_profile", activeProfileKey);
     }
 
     // =========================================================================
-    // 4. CLOUD SYNC ENGINE (GOOGLE SHEETS)
+    // 4. CLOUD SYNC ENGINE (MULTI-PROFILE + VOICE CLIPS)
     // =========================================================================
     function setCloudStatus(status, message) {
       const icon = document.getElementById("cloudIcon");
@@ -569,12 +631,12 @@
       if (status === "syncing") {
         icon.textContent = "⏳";
         text.textContent = "Syncing...";
-        btn.className = "flex items-center gap-1 px-2.5 py-2 rounded-full bg-amber-50 border-2 border-amber-300 text-amber-800 text-xs font-bold shadow-sm";
+        btn.className = "flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-50 border-2 border-amber-300 text-amber-800 text-xs font-bold shadow-sm";
         if (modalBadge) modalBadge.textContent = "Syncing...";
       } else if (status === "ok") {
         icon.textContent = "☁️";
         text.textContent = "Synced";
-        btn.className = "flex items-center gap-1 px-2.5 py-2 rounded-full bg-emerald-50 border-2 border-emerald-300 text-emerald-700 text-xs font-bold shadow-sm";
+        btn.className = "flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-emerald-50 border-2 border-emerald-300 text-emerald-700 text-xs font-bold shadow-sm";
         if (modalBadge) {
           modalBadge.textContent = "☁️ Cloud Connected";
           modalBadge.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
@@ -582,7 +644,7 @@
       } else {
         icon.textContent = "⚠️";
         text.textContent = "Offline";
-        btn.className = "flex items-center gap-1 px-2.5 py-2 rounded-full bg-rose-50 border-2 border-rose-300 text-rose-700 text-xs font-bold shadow-sm";
+        btn.className = "flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-rose-50 border-2 border-rose-300 text-rose-700 text-xs font-bold shadow-sm";
         if (modalBadge) modalBadge.textContent = "Offline / Local";
       }
     }
@@ -590,55 +652,63 @@
     async function pullFromCloud() {
       const url = getWebhookUrl();
       if (!url) return;
-      setCloudStatus("syncing", "Pulling progress & voices from Google Sheet...");
+      setCloudStatus("syncing", "Pulling profiles & voices from Google Sheet...");
       try {
-        const res = await fetch(url + "?action=loadAll&t=" + Date.now());
+        const res = await fetch(url + "?action=loadAll&t=" + Date.now(), { redirect: "follow" });
         const data = await res.json();
         if (data && data.ok) {
-          if (data.state) {
-            state.stars = Math.max(state.stars, data.state.stars || 3);
-            state.buddy = data.state.buddy || state.buddy;
-            state.completed = { ...state.completed, ...(data.state.completed || {}) };
-            if (typeof data.state.macrons === "boolean") state.macrons = data.state.macrons;
-            saveLocalState();
+          if (data.profiles && typeof data.profiles === "object") {
+            Object.keys(data.profiles).forEach((k) => {
+              if (k === "default" && !data.profiles["reid"]) {
+                profilesMap["reid"] = { ...profilesMap["reid"], ...data.profiles["default"], name: "Reid", icon: "👦" };
+              } else if (k !== "default") {
+                profilesMap[k] = {
+                  ...createBlankProfile(k, "👦"),
+                  ...(profilesMap[k] || {}),
+                  ...data.profiles[k]
+                };
+              }
+            });
           }
           if (data.voices) {
             Object.assign(voiceCache, data.voices);
           }
-          setCloudStatus("ok", "Synced with Google Sheets!");
+          applyProfileToState(activeProfileKey);
+          saveLocalProfiles();
+          setCloudStatus("ok", "All profiles & voice clips synced with Google Sheets!");
           renderAll();
         } else {
-          setCloudStatus("error", "Could not read sheet response.");
+          setCloudStatus("error", "Could not read Google Sheet response.");
         }
       } catch (err) {
-        setCloudStatus("error", "Offline mode — using local device storage.");
+        setCloudStatus("error", "Offline mode — using local storage.");
       }
     }
 
     async function pushProgressToCloud() {
-      saveLocalState();
+      saveLocalProfiles();
       const url = getWebhookUrl();
       if (!url) return;
       setCloudStatus("syncing");
       try {
-        await fetch(url, {
+        const res = await fetch(url, {
           method: "POST",
+          redirect: "follow",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "saveProgress",
-            profileKey: "default",
-            state: {
-              stars: state.stars,
-              buddy: state.buddy,
-              completed: state.completed,
-              macrons: state.macrons,
-              rate: state.rate
-            }
+            profileKey: activeProfileKey,
+            state: profilesMap[activeProfileKey]
           })
         });
-        setCloudStatus("ok", "Progress saved to Google Sheets!");
+        const data = await res.json();
+        if (data && data.ok) {
+          setCloudStatus("ok", `Saved ${state.name}'s progress to Google Sheets!`);
+        } else {
+          setCloudStatus("error", (data && data.message) || "Save error");
+        }
       } catch (err) {
-        setCloudStatus("error");
+        setCloudStatus("error", "Saved locally (offline).");
       }
     }
 
@@ -646,27 +716,136 @@
       voiceCache[clipId] = dataUrl;
       const url = getWebhookUrl();
       if (!url) return;
-      setCloudStatus("syncing", `Uploading voice clip (${clipId})...`);
+      setCloudStatus("syncing", `Uploading "${clipId}" voice clip to Google Sheets...`);
       try {
-        await fetch(url, {
+        const res = await fetch(url, {
           method: "POST",
+          redirect: "follow",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "saveVoice",
-            clipId,
-            dataUrl
+            clipId: clipId,
+            key: clipId,
+            dataUrl: dataUrl
           })
         });
-        setCloudStatus("ok", `Saved "${clipId}" to Google Sheets!`);
+        const data = await res.json();
+        if (data && data.ok) {
+          setCloudStatus("ok", `Uploaded "${clipId}" (${Math.round(dataUrl.length / 1024)} KB) to VoiceClips tab!`);
+        } else {
+          setCloudStatus("error", "Sheet error: " + ((data && data.message) || "Check Code.gs deployment"));
+        }
         renderExplorer();
         renderStudioList();
       } catch (err) {
-        setCloudStatus("error", "Saved locally (cloud upload failed).");
+        setCloudStatus("error", "Saved on phone, but cloud upload failed. Did you redeploy Code.gs as New Version?");
       }
     }
 
     // =========================================================================
-    // 5. AUDIO PLAYBACK & UNIVERSAL 9kHz WAV RECORDER
+    // 5. PROFILE MODAL & RESET LOGIC
+    // =========================================================================
+    function openProfileModal() {
+      renderProfileModalList();
+      document.getElementById("profileModal").classList.remove("hidden");
+    }
+
+    function closeProfileModal() {
+      document.getElementById("profileModal").classList.add("hidden");
+    }
+
+    function renderProfileModalList() {
+      const container = document.getElementById("profileCardsList");
+      const keys = Object.keys(profilesMap);
+      container.innerHTML = keys.map((key) => {
+        const p = profilesMap[key];
+        const isCurrent = key === activeProfileKey;
+        const canDelete = key !== "reid" && key !== "test";
+        return `
+          <div class="flex items-center justify-between p-3 rounded-2xl border-2 transition-all ${
+            isCurrent ? "bg-sky-50 border-sky-500 shadow-sm" : "bg-white border-slate-200"
+          }">
+            <button onclick="switchProfile('${key}')" class="flex items-center gap-3 flex-1 text-left">
+              <span class="text-3xl bg-white w-12 h-12 rounded-2xl border flex items-center justify-center shadow-sm">${p.icon || "👦"}</span>
+              <div>
+                <p class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-1.5">
+                  <span>${p.name}</span>
+                  ${isCurrent ? '<span class="text-[10px] bg-sky-600 text-white px-2 py-0.5 rounded-full">Active</span>' : ''}
+                </p>
+                <p class="text-xs text-slate-500 font-medium">⭐ ${p.stars || 0} Stars • ${Object.keys(p.completed || {}).length} Mastered</p>
+              </div>
+            </button>
+            ${canDelete ? `
+              <button onclick="deleteCustomProfile('${key}')" title="Delete Profile" class="text-rose-500 hover:bg-rose-50 p-2 rounded-xl text-xs font-bold">
+                🗑️
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function switchProfile(profileKey) {
+      saveLocalProfiles();
+      applyProfileToState(profileKey);
+      renderAll();
+      closeProfileModal();
+    }
+
+    function createNewProfile() {
+      const nameInput = document.getElementById("newProfileNameInput");
+      const emojiSelect = document.getElementById("newProfileEmoji");
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert("Please enter a profile name!");
+        return;
+      }
+      const key = "prof_" + name.toLowerCase().replace(/[^a-z0-9]/g, "") + "_" + Date.now().toString().slice(-3);
+      profilesMap[key] = createBlankProfile(name, emojiSelect.value);
+      nameInput.value = "";
+      applyProfileToState(key);
+      saveLocalProfiles();
+      renderAll();
+      closeProfileModal();
+      pushProgressToCloud();
+    }
+
+    async function deleteCustomProfile(profileKey) {
+      const p = profilesMap[profileKey];
+      if (!p || !confirm(`Delete profile "${p.name}"?`)) return;
+      delete profilesMap[profileKey];
+      if (activeProfileKey === profileKey) {
+        applyProfileToState("reid");
+      }
+      saveLocalProfiles();
+      renderProfileModalList();
+      renderAll();
+
+      const url = getWebhookUrl();
+      if (url) {
+        fetch(url, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "deleteProfile", profileKey })
+        }).catch(() => {});
+      }
+    }
+
+    async function resetActiveProfileProgress() {
+      if (!confirm(`Reset ${state.name}'s stars, unlocked buddies, and checkmarks back to 0? (Your recorded voice clips will NOT be deleted.)`)) {
+        return;
+      }
+      state.stars = 0;
+      state.buddy = "dino";
+      state.completed = {};
+      saveLocalProfiles();
+      renderAll();
+      await pushProgressToCloud();
+    }
+
+    // =========================================================================
+    // 6. AUDIO PLAYBACK & COMPACT 7kHz WAV RECORDER
     // =========================================================================
     function playClipOrTTS(clipId, fallbackText) {
       if (voiceCache[clipId]) {
@@ -686,7 +865,7 @@
       window.speechSynthesis.speak(utter);
     }
 
-    async function recordUniversalWav(clipId, durationMs = 1750) {
+    async function recordUniversalWav(clipId, durationMs = 1650) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -707,8 +886,8 @@
         source.disconnect();
         stream.getTracks().forEach((t) => t.stop());
 
-        // Downsample to 9000 Hz 16-bit Mono WAV (<42KB Base64 for Google Sheets cell)
-        const targetRate = 9000;
+        // Downsample to 7000 Hz 16-bit Mono WAV (~30KB Base64 — fast & under 50k cell limit)
+        const targetRate = 7000;
         const totalLength = chunks.reduce((acc, c) => acc + c.length, 0);
         const merged = new Float32Array(totalLength);
         let offset = 0;
@@ -772,7 +951,7 @@
     }
 
     // =========================================================================
-    // 6. UI RENDERERS & INTERACTIONS
+    // 7. UI RENDERERS
     // =========================================================================
     function renderHeader() {
       const buddyObj = BUDDIES.find((b) => b.id === state.buddy) || BUDDIES[0];
@@ -780,6 +959,11 @@
       document.getElementById("headerBuddyName").textContent = buddyObj.name;
       document.getElementById("starCountDisplay").textContent = state.stars;
       document.getElementById("stickerStarTotal").textContent = state.stars;
+
+      document.getElementById("activeProfileIcon").textContent = state.icon || "👦";
+      document.getElementById("activeProfileName").textContent = state.name || "Reid";
+      document.getElementById("masteredBtnLabel").textContent = `${state.name} Said It! (+1 Star)`;
+      document.getElementById("stickerBookHeading").textContent = `🏆 ${state.name}'s Reading Buddies`;
 
       const cueText = `Cue Marks: ${state.macrons ? "ON" : "OFF"}`;
       document.getElementById("cueToggleBtnMobile").textContent = cueText;
@@ -819,14 +1003,11 @@
         customIndicator.classList.add("hidden");
       }
 
-      const displayEl = document.getElementById("explorerDisplay");
-      displayEl.innerHTML = state.macrons ? item.macronDisplay : item.display;
-
+      document.getElementById("explorerDisplay").innerHTML = state.macrons ? item.macronDisplay : item.display;
       document.getElementById("orthographyArrow").style.display = state.macrons ? "flex" : "none";
       document.getElementById("explorerMouthTip").textContent = item.mouth;
       document.getElementById("explorerExampleWord").innerHTML = `Example: <b>${item.example}</b>`;
 
-      // Dots
       const dotsEl = document.getElementById("explorerDots");
       dotsEl.innerHTML = items.map((it, idx) => {
         const done = state.completed[it.id];
@@ -874,7 +1055,7 @@
     }
 
     // =========================================================================
-    // 7. SLIDE & BLEND ENGINE
+    // 8. SLIDE & BLEND
     // =========================================================================
     let lastBlendActiveIdx = -1;
 
@@ -929,9 +1110,7 @@
     }
 
     function finishBlendSlide(val) {
-      if (Number(val) >= 85) {
-        playBlendFast();
-      }
+      if (Number(val) >= 85) playBlendFast();
     }
 
     function playBlendSlow() {
@@ -964,7 +1143,7 @@
     }
 
     // =========================================================================
-    // 8. SOUND DETECTIVE GAME
+    // 9. SOUND DETECTIVE & STICKERS
     // =========================================================================
     function newDetectiveRound() {
       const pool = CURRICULUM[state.level].explorer;
@@ -993,7 +1172,7 @@
       if (!state.detectiveTarget) return;
       const fb = document.getElementById("detectiveFeedback");
       if (chosenId === state.detectiveTarget.id) {
-        fb.textContent = "🎉 Awesome job, Detective Reid! +1 Star!";
+        fb.textContent = `🎉 Awesome job, ${state.name}! +1 Star!`;
         fb.className = "text-sm sm:text-base font-bold text-emerald-600";
         state.stars += 1;
         renderHeader();
@@ -1006,9 +1185,6 @@
       }
     }
 
-    // =========================================================================
-    // 9. STICKER BOOK & PARENT STUDIO
-    // =========================================================================
     function renderStickers() {
       const grid = document.getElementById("buddiesGrid");
       grid.innerHTML = BUDDIES.map((b) => {
@@ -1044,13 +1220,12 @@
       pushProgressToCloud();
     }
 
-    function quickRecordCurrent() {
+    function quickRecordCurrent(btnEl) {
       const item = CURRICULUM[state.level].explorer[state.explorerIdx];
-      const btn = event.currentTarget;
-      const original = btn.innerHTML;
-      btn.innerHTML = "🔴 Recording...";
+      const original = btnEl.innerHTML;
+      btnEl.innerHTML = "🔴 Rec...";
       recordUniversalWav(item.id).finally(() => {
-        btn.innerHTML = original;
+        btnEl.innerHTML = original;
       });
     }
 
@@ -1117,9 +1292,6 @@
       pullFromCloud();
     }
 
-    // =========================================================================
-    // 10. NAVIGATION & INIT
-    // =========================================================================
     function selectLevel(lvl) {
       state.level = lvl;
       state.explorerIdx = 0;
@@ -1157,7 +1329,7 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      loadLocalState();
+      loadLocalProfiles();
       renderAll();
       pullFromCloud();
     });
