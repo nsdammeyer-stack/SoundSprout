@@ -151,20 +151,20 @@
             </button>
             <button onclick="selectLevel(3)" id="lvlBtn-3" class="toy-btn px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 whitespace-nowrap">
                 Lvl 3: More Words
-            </button>
-            <button onclick="selectLevel(4)" id="lvlBtn-4" class="toy-btn px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 whitespace-nowrap">
-                Lvl 4: Sentences
-            </button>
-        </div>
-
-        <!-- Star Counter & Parent Studio Button -->
+            <!--button onclick="switchMode('stickers')" class="toy-btn flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-3.5 py-2 rounded-3xl shadow-[0_4px_0_#D97706] border-2 border-white"-->
+        <!-- Star Counter, Cloud Sync Status Pill & Parent Studio Button -->
         <div class="flex items-center gap-2">
+            <button onclick="openParentModal()" id="cloudSyncHeaderPill" class="toy-btn flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-3 py-2 rounded-3xl border-2 border-amber-300 text-xs shadow-sm" title="Cloud Sync Status — Tap to configure">
+                <span id="cloudSyncHeaderIcon">⚠️</span>
+                <span id="cloudSyncHeaderText" class="hidden md:inline">Local Only</span>
+            </button>
+
             <button onclick="switchMode('stickers')" class="toy-btn flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-3.5 py-2 rounded-3xl shadow-[0_4px_0_#D97706] border-2 border-white">
                 <span class="text-xl">⭐</span>
                 <span id="starCountDisplay" class="text-lg">0</span>
             </button>
 
-            <button onclick="openParentModal()" class="toy-btn flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3.5 py-2 rounded-3xl shadow-[0_4px_0_#3730A3] border-2 border-white text-xs sm:text-sm" title="Parent Voice Studio & Settings">
+            <button onclick="openParentModal()" class="toy-btn flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3.5 py-2 rounded-3xl shadow-[0_4px_0_#3730A3] border-2 border-white text-xs sm:text-sm" title="Parent Voice Studio & Cloud Sync">
                 <span>🎙️</span>
                 <span class="hidden sm:inline">Parent Studio</span>
             </button>
@@ -464,47 +464,63 @@
             <!-- Modal Body -->
             <div class="p-6 overflow-y-auto space-y-6 flex-1">
                 
-                <!-- Why Record Parent Voice Box -->
-                <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-sm text-slate-700 space-y-1">
-                    <div class="font-bold text-amber-900 flex items-center gap-1.5">
-                        <span>💡</span> <span>Why Record Your Own Phonemes? (Direct Instruction Tip)</span>
+                <!-- Google Sheets Full Cross-Device Cloud Sync Section -->
+                <div class="bg-indigo-50/90 border-2 border-indigo-200 rounded-2xl p-4 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h4 class="font-bold text-indigo-950 text-base flex items-center gap-2">
+                            <span>☁️</span> <span>Cross-Device Cloud Sync (Google Sheets + Voice Audio)</span>
+                        </h4>
+                        <span id="modalCloudStatusBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                            ⚠️ Local Only — Tap to Connect
+                        </span>
                     </div>
-                    <p>
-                        Computer voices often say letter names ("em" or "ess") or add an extra "uh" sound ("muh", "suh") which makes blending words like <b>s-a-m</b> confusing for 4-year-olds. Tap <b>Hold or Tap to Record</b> below to record pure 2-second sounds (e.g., <i>"mmmmmm"</i>, <i>"ssssss"</i>, <i>"aaaaaa"</i>) saved right in your browser!
-                    </p>
-                </div>
-
-                <!-- Voice Recording Grid -->
-                <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="font-bold text-slate-800 text-base">Record Sounds & Words (Saved Locally in IndexedDB)</h4>
-                        <span id="micPermissionStatus" class="text-xs font-bold text-slate-500">Microphone Ready</span>
-                    </div>
-                    <div id="voiceStudioGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
-                        <!-- Populated via JS -->
-                    </div>
-                </div>
-
-                <!-- Google Sheets Cloud Sync & Progress Backup -->
-                <div class="border-t-2 border-slate-100 pt-4 space-y-3">
-                    <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                        <span>☁️</span> <span>Optional Google Sheets Progress Webhook</span>
-                    </h4>
-                    <p class="text-xs text-slate-500">
-                        Paste a Google Apps Script Web App URL if you'd like to log your child's stars and practiced words to a family Google Sheet. All progress is also automatically saved offline on this device.
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Paste your <b>Google Apps Script Web App URL</b> below (or hardcode <code class="bg-white px-1.5 py-0.5 rounded border">DEFAULT_SCRIPT_URL</code> in <code class="bg-white px-1.5 py-0.5 rounded border">index.html</code>) so stars, unlocked buddies, and your recorded voice clips automatically sync across iPhone, iPad, tablet, and computer!
                     </p>
                     <div class="flex flex-col sm:flex-row gap-2">
                         <input 
                             type="url" 
                             id="webhookUrlInput" 
                             placeholder="https://script.google.com/macros/s/.../exec" 
-                            class="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-200 text-sm focus:border-indigo-500 focus:outline-none"
+                            class="flex-1 px-3.5 py-2 rounded-xl border-2 border-indigo-200 text-sm focus:border-indigo-500 focus:outline-none bg-white"
                         />
-                        <button onclick="saveWebhookAndSync()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm shrink-0 shadow">
-                            Save & Sync Now
+                        <button onclick="saveWebhookAndSync()" class="toy-btn bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm shrink-0 shadow">
+                            💾 Save & Pull Cloud
                         </button>
                     </div>
-                    <div id="webhookStatusMsg" class="text-xs font-bold text-emerald-600"></div>
+                    <div class="flex flex-wrap items-center gap-2 pt-1">
+                        <button onclick="pullFromCloud(true)" class="toy-btn bg-white hover:bg-indigo-100 text-indigo-800 border border-indigo-300 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1">
+                            <span>🔄</span> <span>Sync Now (Pull)</span>
+                        </button>
+                        <button onclick="pushAllLocalToCloud()" class="toy-btn bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-sm">
+                            <span>📤</span> <span>Push All Local Data & Voices to Cloud</span>
+                        </button>
+                        <button onclick="copyAppsScriptCode()" id="copyGasBtn" class="toy-btn bg-slate-800 hover:bg-slate-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 ml-auto">
+                            <span>📋</span> <span>Copy Google Apps Script (Code.gs)</span>
+                        </button>
+                    </div>
+                    <div id="webhookStatusMsg" class="text-xs font-bold text-indigo-700 min-h-[1rem]"></div>
+                </div>
+
+                <!-- Why Record Parent Voice Box -->
+                <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-sm text-slate-700 space-y-1">
+                    <div class="font-bold text-amber-900 flex items-center gap-1.5">
+                        <span>💡</span> <span>Universal Cross-Device Voice Recorder (9kHz WAV Base64)</span>
+                    </div>
+                    <p>
+                        Computer voices often add an extra "uh" sound ("muh", "suh") which makes blending confusing. Each 1.8-second recording is encoded directly into a compact, universal <b>WAV audio string (~32 KB)</b> that plays on iPhone/iPad Safari, Android, and PC—and syncs right into a single Google Sheet cell!
+                    </p>
+                </div>
+
+                <!-- Voice Recording Grid -->
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-slate-800 text-base">Record Sounds & Words (IndexedDB + Cloud Sync)</h4>
+                        <span id="micPermissionStatus" class="text-xs font-bold text-slate-500">Microphone Ready</span>
+                    </div>
+                    <div id="voiceStudioGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
+                        <!-- Populated via JS -->
+                    </div>
                 </div>
 
                 <!-- Reset Options -->
@@ -521,6 +537,13 @@
     </div>
 
     <script>
+        /********************************************************************
+         * 0. CLOUD CONFIGURATION (OPTIONAL HARDCODED URL)
+         * Paste your deployed Google Apps Script Web App URL inside the quotes
+         * below so you never even have to type it in on new devices!
+         ********************************************************************/
+        const DEFAULT_SCRIPT_URL = "";
+
         /********************************************************************
          * 1. SYSTEMATIC PHONICS CURRICULUM DATA
          * Inspired by "Teach Your Child to Read in 100 Easy Lessons"
@@ -968,7 +991,7 @@
         ];
 
         /********************************************************************
-         * 2. APPLICATION STATE & PERSISTENCE (localStorage + IndexedDB)
+         * 2. APPLICATION STATE & PERSISTENCE (localStorage + IndexedDB + Cloud)
          ********************************************************************/
         let appState = {
             currentLevel: 1,
@@ -980,9 +1003,56 @@
             showOrthoMarks: true,
             detectiveStreak: 0,
             detectiveTarget: null,
-            webhookUrl: '',
-            masteredItems: {}
+            webhookUrl: DEFAULT_SCRIPT_URL || '',
+            masteredItems: {},
+            updatedAt: 0
         };
+
+        function getActiveScriptUrl() {
+            return (appState.webhookUrl && appState.webhookUrl.trim()) || DEFAULT_SCRIPT_URL.trim() || '';
+        }
+
+        function setCloudStatusPill(state, customMsg) {
+            const pill = document.getElementById('cloudSyncHeaderPill');
+            const icon = document.getElementById('cloudSyncHeaderIcon');
+            const text = document.getElementById('cloudSyncHeaderText');
+            const modalBadge = document.getElementById('modalCloudStatusBadge');
+            if (!pill || !icon || !text) return;
+
+            if (state === 'synced') {
+                pill.className = 'toy-btn flex items-center gap-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold px-3 py-2 rounded-3xl border-2 border-emerald-300 text-xs shadow-sm';
+                icon.textContent = '☁️';
+                text.textContent = customMsg || 'Synced';
+                if (modalBadge) {
+                    modalBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+                    modalBadge.textContent = '☁️ Cloud Connected & Synced';
+                }
+            } else if (state === 'syncing') {
+                pill.className = 'toy-btn flex items-center gap-1.5 bg-sky-100 hover:bg-sky-200 text-sky-900 font-bold px-3 py-2 rounded-3xl border-2 border-sky-300 text-xs shadow-sm animate-pulse';
+                icon.textContent = '🔄';
+                text.textContent = customMsg || 'Syncing...';
+                if (modalBadge) {
+                    modalBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-300';
+                    modalBadge.textContent = '🔄 Syncing with Google Sheets...';
+                }
+            } else if (state === 'error') {
+                pill.className = 'toy-btn flex items-center gap-1.5 bg-rose-100 hover:bg-rose-200 text-rose-900 font-bold px-3 py-2 rounded-3xl border-2 border-rose-300 text-xs shadow-sm';
+                icon.textContent = '⚠️';
+                text.textContent = customMsg || 'Offline Cache';
+                if (modalBadge) {
+                    modalBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-300';
+                    modalBadge.textContent = '⚠️ Cloud Offline (Saved Locally)';
+                }
+            } else {
+                pill.className = 'toy-btn flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-3 py-2 rounded-3xl border-2 border-amber-300 text-xs shadow-sm';
+                icon.textContent = '⚠️';
+                text.textContent = 'Local Only';
+                if (modalBadge) {
+                    modalBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300';
+                    modalBadge.textContent = '⚠️ Local Only — Paste Script URL Below';
+                }
+            }
+        }
 
         // Load saved state from localStorage
         function loadSavedState() {
@@ -992,13 +1062,18 @@
                     const parsed = JSON.parse(raw);
                     appState = { ...appState, ...parsed };
                 }
+                if (DEFAULT_SCRIPT_URL && !appState.webhookUrl) {
+                    appState.webhookUrl = DEFAULT_SCRIPT_URL;
+                }
             } catch (e) {
                 console.warn('Could not load localStorage state', e);
             }
             updateHeaderUI();
+            setCloudStatusPill(getActiveScriptUrl() ? 'synced' : 'local');
         }
 
-        function saveState() {
+        function saveState(skipCloudPush = false) {
+            appState.updatedAt = Date.now();
             try {
                 localStorage.setItem('soundsprout_state_v1', JSON.stringify({
                     currentLevel: appState.currentLevel,
@@ -1006,23 +1081,28 @@
                     activeCompanion: appState.activeCompanion,
                     showOrthoMarks: appState.showOrthoMarks,
                     webhookUrl: appState.webhookUrl,
-                    masteredItems: appState.masteredItems
+                    masteredItems: appState.masteredItems,
+                    updatedAt: appState.updatedAt
                 }));
             } catch (e) {
                 console.warn('Could not save state', e);
             }
             updateHeaderUI();
+            if (!skipCloudPush && getActiveScriptUrl()) {
+                pushProgressToCloud();
+            }
         }
 
         /********************************************************************
-         * 3. INDEXED-DB CUSTOM PARENT VOICE RECORDER ENGINE
+         * 3. UNIVERSAL WAV BASE64 RECORDER & INDEXED-DB ENGINE
+         * Encodes 9,000 Hz 16-bit mono PCM WAV (~1.75 sec = ~31.5 KB bytes
+         * = ~42,000 Base64 chars, strictly <50,000 Google Sheets cell limit!)
          ********************************************************************/
         const DB_NAME = 'SoundSproutVoiceDB';
         const STORE_NAME = 'recordings';
         let voiceDB = null;
-        let customAudioCache = {}; // id -> Blob URL
-        let activeMediaRecorder = null;
-        let recordingItemId = null;
+        let customAudioCache = {}; // itemId -> "data:audio/wav;base64,..."
+        let activeWavRecorder = null; // { stop: fn, itemId: string }
 
         function initVoiceDB() {
             return new Promise((resolve) => {
@@ -1030,7 +1110,7 @@
                     resolve(null);
                     return;
                 }
-                const request = indexedDB.open(DB_NAME, 1);
+                const request = indexedDB.open(DB_NAME, 2);
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -1045,82 +1125,203 @@
             });
         }
 
+        function blobToDataURL(blob) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(blob);
+            });
+        }
+
         function loadAllCustomVoicesIntoMemory() {
             return new Promise((resolve) => {
                 if (!voiceDB) return resolve();
                 const tx = voiceDB.transaction(STORE_NAME, 'readonly');
                 const store = tx.objectStore(STORE_NAME);
                 const req = store.openCursor();
+                const pendingPromises = [];
                 req.onsuccess = (e) => {
                     const cursor = e.target.result;
                     if (cursor) {
-                        const blob = cursor.value;
-                        if (blob instanceof Blob) {
-                            customAudioCache[cursor.key] = URL.createObjectURL(blob);
+                        const key = cursor.key;
+                        const val = cursor.value;
+                        if (typeof val === 'string' && val.startsWith('data:audio')) {
+                            customAudioCache[key] = val;
+                        } else if (val instanceof Blob) {
+                            pendingPromises.push(
+                                blobToDataURL(val).then(dataUrl => {
+                                    if (dataUrl) customAudioCache[key] = dataUrl;
+                                })
+                            );
                         }
                         cursor.continue();
                     } else {
-                        resolve();
+                        Promise.all(pendingPromises).then(resolve);
                     }
                 };
                 req.onerror = () => resolve();
             });
         }
 
-        function saveVoiceBlobToDB(itemId, blob) {
+        function saveVoiceDataUrlToDB(itemId, dataUrl, skipCloud = false) {
             return new Promise((resolve) => {
-                if (customAudioCache[itemId]) {
-                    URL.revokeObjectURL(customAudioCache[itemId]);
+                customAudioCache[itemId] = dataUrl;
+                if (!skipCloud && getActiveScriptUrl()) {
+                    pushSingleVoiceClipToCloud(itemId, dataUrl);
                 }
-                customAudioCache[itemId] = URL.createObjectURL(blob);
                 if (!voiceDB) return resolve();
                 const tx = voiceDB.transaction(STORE_NAME, 'readwrite');
-                tx.objectStore(STORE_NAME).put(blob, itemId);
+                tx.objectStore(STORE_NAME).put(dataUrl, itemId);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => resolve();
+            });
+        }
+
+        function deleteVoiceFromDB(itemId, skipCloud = false) {
+            return new Promise((resolve) => {
+                delete customAudioCache[itemId];
+                if (!skipCloud && getActiveScriptUrl()) {
+                    deleteVoiceClipFromCloud(itemId);
+                }
+                if (!voiceDB) return resolve();
+                const tx = voiceDB.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).delete(itemId);
                 tx.oncomplete = () => resolve();
                 tx.onerror = () => resolve();
             });
         }
 
         async function clearAllCustomVoices() {
-            Object.values(customAudioCache).forEach(url => URL.revokeObjectURL(url));
+            const keys = Object.keys(customAudioCache);
             customAudioCache = {};
             if (voiceDB) {
                 const tx = voiceDB.transaction(STORE_NAME, 'readwrite');
                 tx.objectStore(STORE_NAME).clear();
             }
+            if (getActiveScriptUrl()) {
+                for (const k of keys) {
+                    deleteVoiceClipFromCloud(k);
+                }
+            }
             renderVoiceStudioGrid();
             renderExplorer();
+            updateQuickMicButton();
             playSoundEffect('pop');
         }
 
+        // Downsample Float32 PCM buffer and encode to 16-bit mono WAV Base64 Data URL
+        function encodePCMToWavBase64(float32Samples, inputSampleRate, targetSampleRate = 9000) {
+            const ratio = inputSampleRate / targetSampleRate;
+            const outLength = Math.floor(float32Samples.length / ratio);
+            // Cap at max 15,800 samples (~1.75s at 9000Hz = 31,644 bytes = 42,192 base64 chars < 45,000 limit)
+            const clampedLength = Math.min(outLength, 15800);
+            const wavBuffer = new ArrayBuffer(44 + clampedLength * 2);
+            const view = new DataView(wavBuffer);
+
+            function writeStr(offset, str) {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
+            }
+
+            writeStr(0, 'RIFF');
+            view.setUint32(4, 36 + clampedLength * 2, true);
+            writeStr(8, 'WAVE');
+            writeStr(12, 'fmt ');
+            view.setUint32(16, 16, true); // PCM chunk size
+            view.setUint16(20, 1, true);  // Linear PCM format
+            view.setUint16(22, 1, true);  // 1 channel (Mono)
+            view.setUint32(24, targetSampleRate, true);
+            view.setUint32(28, targetSampleRate * 2, true); // byte rate
+            view.setUint16(32, 2, true);  // block align
+            view.setUint16(34, 16, true); // 16-bit samples
+            writeStr(36, 'data');
+            view.setUint32(40, clampedLength * 2, true);
+
+            let offset = 44;
+            for (let i = 0; i < clampedLength; i++) {
+                const startIdx = Math.floor(i * ratio);
+                const endIdx = Math.min(float32Samples.length, Math.floor((i + 1) * ratio));
+                let sum = 0;
+                let count = 0;
+                for (let j = startIdx; j < endIdx; j++) {
+                    sum += float32Samples[j];
+                    count++;
+                }
+                const sample = count > 0 ? sum / count : float32Samples[startIdx] || 0;
+                const s = Math.max(-1, Math.min(1, sample));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                offset += 2;
+            }
+
+            const bytes = new Uint8Array(wavBuffer);
+            let binary = '';
+            const chunkSize = 8192;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+            }
+            return 'data:audio/wav;base64,' + btoa(binary);
+        }
+
         async function toggleRecordForItem(itemId, btnElement) {
-            // If currently recording this item, stop immediately
-            if (activeMediaRecorder && activeMediaRecorder.state === 'recording') {
-                activeMediaRecorder.stop();
+            if (activeWavRecorder) {
+                activeWavRecorder.stop();
                 return;
             }
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const chunks = [];
-                recordingItemId = itemId;
-                activeMediaRecorder = new MediaRecorder(stream);
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+
+                const recCtx = getAudioContext();
+                const source = recCtx.createMediaStreamSource(stream);
+                const processor = recCtx.createScriptProcessor(4096, 1, 1);
+                const pcmChunks = [];
+                let totalSamples = 0;
+                let stopped = false;
 
                 if (btnElement) {
                     btnElement.classList.add('recording-pulse', 'bg-rose-600', 'text-white');
                     btnElement.innerHTML = '⏹️ Recording... (Tap to Stop)';
                 }
 
-                activeMediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) chunks.push(e.data);
+                processor.onaudioprocess = (e) => {
+                    if (stopped) return;
+                    const input = e.inputBuffer.getChannelData(0);
+                    pcmChunks.push(new Float32Array(input));
+                    totalSamples += input.length;
                 };
 
-                activeMediaRecorder.onstop = async () => {
+                source.connect(processor);
+                processor.connect(recCtx.destination);
+
+                const finishRecording = async () => {
+                    if (stopped) return;
+                    stopped = true;
+                    activeWavRecorder = null;
+
+                    try {
+                        processor.disconnect();
+                        source.disconnect();
+                    } catch (e) {}
                     stream.getTracks().forEach(t => t.stop());
-                    const blob = new Blob(chunks, { type: activeMediaRecorder.mimeType || 'audio/webm' });
-                    await saveVoiceBlobToDB(itemId, blob);
-                    activeMediaRecorder = null;
-                    recordingItemId = null;
+
+                    const merged = new Float32Array(totalSamples);
+                    let pos = 0;
+                    for (const chunk of pcmChunks) {
+                        merged.set(chunk, pos);
+                        pos += chunk.length;
+                    }
+
+                    // Encode to universal 9kHz 16-bit mono WAV Base64 (<43,000 chars)
+                    const wavDataUrl = encodePCMToWavBase64(merged, recCtx.sampleRate, 9000);
+                    await saveVoiceDataUrlToDB(itemId, wavDataUrl, false);
 
                     playSoundEffect('chime');
                     renderVoiceStudioGrid();
@@ -1128,14 +1329,14 @@
                     updateQuickMicButton();
                 };
 
-                activeMediaRecorder.start();
+                activeWavRecorder = { stop: finishRecording, itemId };
 
-                // Auto-stop after 2.6 seconds so parents don't even have to tap twice
+                // Auto-stop after 1.75 seconds so every clip fits comfortably inside a single Google Sheet cell
                 setTimeout(() => {
-                    if (activeMediaRecorder && activeMediaRecorder.state === 'recording' && recordingItemId === itemId) {
-                        activeMediaRecorder.stop();
+                    if (activeWavRecorder && activeWavRecorder.itemId === itemId) {
+                        activeWavRecorder.stop();
                     }
-                }, 2600);
+                }, 1750);
 
             } catch (err) {
                 const statusEl = document.getElementById('micPermissionStatus');
@@ -1406,7 +1607,6 @@
             }
             saveState();
             triggerConfettiBurst();
-            syncProgressToWebhookIfConfigured();
         }
 
         /********************************************************************
@@ -1916,15 +2116,347 @@
                         <button class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs">
                             🎙️ ${hasCustom ? 'Redo' : 'Record'}
                         </button>
+                        ${hasCustom ? '<button class="bg-slate-200 hover:bg-rose-100 text-slate-600 hover:text-rose-700 font-bold px-2 py-1.5 rounded-xl text-xs" title="Delete custom voice">✕</button>' : ''}
                     </div>
                 `;
 
-                const [playBtn, recBtn] = row.querySelectorAll('button');
-                playBtn.onclick = () => playAudioForItem(item.id, item.fallback);
-                recBtn.onclick = () => toggleRecordForItem(item.id, recBtn);
+                const btns = row.querySelectorAll('button');
+                btns[0].onclick = () => playAudioForItem(item.id, item.fallback);
+                btns[1].onclick = () => toggleRecordForItem(item.id, btns[1]);
+                if (btns[2]) {
+                    btns[2].onclick = async () => {
+                        await deleteVoiceFromDB(item.id, false);
+                        renderVoiceStudioGrid();
+                        renderExplorer();
+                        updateQuickMicButton();
+                    };
+                }
 
                 grid.appendChild(row);
             });
+        }
+
+        function awardBonusStar() {
+            addStars(5);
+            playSoundEffect('fanfare');
+            renderStickers();
+        }
+
+        /********************************************************************
+         * 10B. GOOGLE SHEETS TWO-WAY CLOUD SYNC ENGINE (CORS-SAFE)
+         ********************************************************************/
+        async function saveWebhookAndSync() {
+            const url = document.getElementById('webhookUrlInput').value.trim();
+            appState.webhookUrl = url;
+            saveState(true);
+
+            const msg = document.getElementById('webhookStatusMsg');
+            if (!getActiveScriptUrl()) {
+                setCloudStatusPill('local');
+                msg.textContent = '✓ Saved local-only mode.';
+                return;
+            }
+            msg.textContent = '🔄 Connecting to Google Sheets & pulling cloud data...';
+            const ok = await pullFromCloud(true);
+            if (ok) {
+                msg.textContent = '✓ Connected! Progress & voice clips are now synced across devices.';
+            } else {
+                msg.textContent = '⚠️ Saved URL, but could not reach the script. Check that deployment access is set to "Anyone".';
+            }
+        }
+
+        async function pullFromCloud(showFeedback = false) {
+            const url = getActiveScriptUrl();
+            if (!url) {
+                setCloudStatusPill('local');
+                return false;
+            }
+
+            setCloudStatusPill('syncing', 'Syncing...');
+            const msg = document.getElementById('webhookStatusMsg');
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'getAll' })
+                });
+                const data = await res.json();
+                if (!data || !data.ok) throw new Error('Invalid response');
+
+                // Merge progress (keep highest stars & union of mastered items)
+                if (data.progress) {
+                    const p = data.progress;
+                    if (typeof p.stars === 'number' && p.stars > appState.stars) {
+                        appState.stars = p.stars;
+                    }
+                    if (p.masteredItems && typeof p.masteredItems === 'object') {
+                        Object.entries(p.masteredItems).forEach(([k, v]) => {
+                            appState.masteredItems[k] = Math.max(appState.masteredItems[k] || 0, Number(v) || 1);
+                        });
+                    }
+                    if (p.activeCompanion) appState.activeCompanion = p.activeCompanion;
+                    if (typeof p.showOrthoMarks === 'boolean') appState.showOrthoMarks = p.showOrthoMarks;
+                    if (typeof p.currentLevel === 'number' && p.currentLevel >= 1 && p.currentLevel <= 4) {
+                        appState.currentLevel = p.currentLevel;
+                    }
+                    saveState(true);
+                }
+
+                // Merge custom voice recordings from cloud into IndexedDB
+                let voiceCount = 0;
+                if (data.audioMap && typeof data.audioMap === 'object') {
+                    for (const [itemId, dataUrl] of Object.entries(data.audioMap)) {
+                        if (typeof dataUrl === 'string' && dataUrl.startsWith('data:audio')) {
+                            await saveVoiceDataUrlToDB(itemId, dataUrl, true);
+                            voiceCount++;
+                        }
+                    }
+                }
+
+                updateHeaderUI();
+                refreshActiveMode();
+                renderVoiceStudioGrid();
+                setCloudStatusPill('synced', 'Synced');
+                if (showFeedback && msg) {
+                    msg.textContent = `✓ Pulled ${appState.stars} ⭐ and ${voiceCount} custom voice clip(s) from Google Sheets!`;
+                }
+                return true;
+            } catch (e) {
+                console.warn('Cloud pull error:', e);
+                setCloudStatusPill('error', 'Offline Cache');
+                if (showFeedback && msg) {
+                    msg.textContent = '⚠️ Could not pull from Google Sheets. Using local offline cache.';
+                }
+                return false;
+            }
+        }
+
+        async function pushProgressToCloud() {
+            const url = getActiveScriptUrl();
+            if (!url) return false;
+            setCloudStatusPill('syncing', 'Saving...');
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'saveProgress',
+                        progress: {
+                            stars: appState.stars,
+                            currentLevel: appState.currentLevel,
+                            activeCompanion: appState.activeCompanion,
+                            showOrthoMarks: appState.showOrthoMarks,
+                            masteredItems: appState.masteredItems,
+                            updatedAt: Date.now()
+                        }
+                    })
+                });
+                const data = await res.json();
+                if (data && data.ok) {
+                    setCloudStatusPill('synced', 'Synced');
+                    return true;
+                }
+                throw new Error('Save failed');
+            } catch (e) {
+                setCloudStatusPill('error', 'Offline Cache');
+                return false;
+            }
+        }
+
+        async function pushSingleVoiceClipToCloud(itemId, dataUrl) {
+            const url = getActiveScriptUrl();
+            if (!url || !dataUrl) return false;
+            setCloudStatusPill('syncing', 'Uploading Voice...');
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'saveVoiceClip',
+                        itemId: itemId,
+                        dataUrl: dataUrl
+                    })
+                });
+                const data = await res.json();
+                if (data && data.ok) {
+                    setCloudStatusPill('synced', 'Voice Synced');
+                    return true;
+                }
+                throw new Error('Voice upload failed');
+            } catch (e) {
+                setCloudStatusPill('error', 'Offline Cache');
+                return false;
+            }
+        }
+
+        async function deleteVoiceClipFromCloud(itemId) {
+            const url = getActiveScriptUrl();
+            if (!url) return false;
+            try {
+                await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'deleteVoiceClip',
+                        itemId: itemId
+                    })
+                });
+                setCloudStatusPill('synced', 'Synced');
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function pushAllLocalToCloud() {
+            const urlInput = document.getElementById('webhookUrlInput');
+            if (urlInput && urlInput.value.trim()) {
+                appState.webhookUrl = urlInput.value.trim();
+                saveState(true);
+            }
+            const url = getActiveScriptUrl();
+            const msg = document.getElementById('webhookStatusMsg');
+            if (!url) {
+                if (msg) msg.textContent = '⚠️ Please paste your Google Apps Script Web App URL above first.';
+                return;
+            }
+
+            if (msg) msg.textContent = '📤 Uploading progress and all recorded voices to Google Sheets...';
+            setCloudStatusPill('syncing', 'Uploading All...');
+
+            const okProg = await pushProgressToCloud();
+            const entries = Object.entries(customAudioCache);
+            let uploadedCount = 0;
+            for (const [itemId, dataUrl] of entries) {
+                const okClip = await pushSingleVoiceClipToCloud(itemId, dataUrl);
+                if (okClip) uploadedCount++;
+            }
+
+            if (okProg) {
+                setCloudStatusPill('synced', 'Synced');
+                if (msg) msg.textContent = `✓ Uploaded ${appState.stars} ⭐ and ${uploadedCount} voice clip(s) to Google Sheets!`;
+                playSoundEffect('chime');
+            } else {
+                if (msg) msg.textContent = '⚠️ Upload failed. Verify your Apps Script Web App URL and permissions.';
+            }
+        }
+
+        function copyAppsScriptCode() {
+            const gasCode = [
+                "// SoundSprout — Google Sheets Cloud Backend (Code.gs)",
+                "// 1. Open a Google Sheet -> Extensions -> Apps Script",
+                "// 2. Paste this code into Code.gs and click Save",
+                "// 3. Click Deploy -> New deployment -> Web app",
+                "// 4. Execute as: 'Me' | Who has access: 'Anyone' -> Deploy & Copy URL!",
+                "",
+                "function doGet(e) {",
+                "  return handleRequest({ action: 'getAll' });",
+                "}",
+                "",
+                "function doPost(e) {",
+                "  var body = {};",
+                "  try {",
+                "    body = JSON.parse(e.postData.contents || '{}');",
+                "  } catch (err) {}",
+                "  return handleRequest(body);",
+                "}",
+                "",
+                "function handleRequest(body) {",
+                "  var lock = LockService.getScriptLock();",
+                "  lock.tryLock(10000);",
+                "  try {",
+                "    var ss = SpreadsheetApp.getActiveSpreadsheet();",
+                "    var stateSheet = getOrCreateSheet(ss, 'ProgressState', ['Key', 'JSONValue', 'UpdatedAt']);",
+                "    var voiceSheet = getOrCreateSheet(ss, 'VoiceClips', ['ItemId', 'Base64Wav', 'UpdatedAt']);",
+                "    var action = body.action || 'getAll';",
+                "",
+                "    if (action === 'saveProgress' && body.progress) {",
+                "      upsertRow(stateSheet, 'main_profile', JSON.stringify(body.progress));",
+                "      return jsonResponse({ ok: true });",
+                "    }",
+                "    if (action === 'saveVoiceClip' && body.itemId && body.dataUrl) {",
+                "      upsertRow(voiceSheet, body.itemId, body.dataUrl);",
+                "      return jsonResponse({ ok: true });",
+                "    }",
+                "    if (action === 'deleteVoiceClip' && body.itemId) {",
+                "      deleteRowByKey(voiceSheet, body.itemId);",
+                "      return jsonResponse({ ok: true });",
+                "    }",
+                "",
+                "    var progress = null;",
+                "    var stateRows = stateSheet.getDataRange().getValues();",
+                "    for (var i = 1; i < stateRows.length; i++) {",
+                "      if (stateRows[i][0] === 'main_profile') {",
+                "        try { progress = JSON.parse(stateRows[i][1]); } catch (e) {}",
+                "      }",
+                "    }",
+                "    var audioMap = {};",
+                "    var voiceRows = voiceSheet.getDataRange().getValues();",
+                "    for (var j = 1; j < voiceRows.length; j++) {",
+                "      if (voiceRows[j][0] && voiceRows[j][1]) {",
+                "        audioMap[voiceRows[j][0]] = voiceRows[j][1];",
+                "      }",
+                "    }",
+                "    return jsonResponse({ ok: true, progress: progress, audioMap: audioMap });",
+                "  } catch (err) {",
+                "    return jsonResponse({ ok: false, error: String(err) });",
+                "  } finally {",
+                "    lock.releaseLock();",
+                "  }",
+                "}",
+                "",
+                "function getOrCreateSheet(ss, name, headers) {",
+                "  var sheet = ss.getSheetByName(name);",
+                "  if (!sheet) {",
+                "    sheet = ss.insertSheet(name);",
+                "    sheet.appendRow(headers);",
+                "  }",
+                "  return sheet;",
+                "}",
+                "",
+                "function upsertRow(sheet, key, val) {",
+                "  var data = sheet.getDataRange().getValues();",
+                "  var now = new Date().toISOString();",
+                "  for (var i = 1; i < data.length; i++) {",
+                "    if (data[i][0] === key) {",
+                "      sheet.getRange(i + 1, 2, 1, 2).setValues([[val, now]]);",
+                "      return;",
+                "    }",
+                "  }",
+                "  sheet.appendRow([key, val, now]);",
+                "}",
+                "",
+                "function deleteRowByKey(sheet, key) {",
+                "  var data = sheet.getDataRange().getValues();",
+                "  for (var i = data.length - 1; i >= 1; i--) {",
+                "    if (data[i][0] === key) {",
+                "      sheet.deleteRow(i + 1);",
+                "    }",
+                "  }",
+                "}",
+                "",
+                "function jsonResponse(obj) {",
+                "  return ContentService.createTextOutput(JSON.stringify(obj))",
+                "    .setMimeType(ContentService.MimeType.JSON);",
+                "}"
+            ].join('\n');
+
+            const temp = document.createElement('textarea');
+            temp.value = gasCode;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+
+            const btn = document.getElementById('copyGasBtn');
+            if (btn) {
+                btn.innerHTML = '<span>✓</span> <span>Copied Code.gs!</span>';
+                setTimeout(() => {
+                    btn.innerHTML = '<span>📋</span> <span>Copy Google Apps Script (Code.gs)</span>';
+                }, 2500);
+            }
+            playSoundEffect('pop');
         }
 
         function awardBonusStar() {
@@ -2042,6 +2574,11 @@
             }
             selectLevel(appState.currentLevel || 1);
             switchMode(appState.currentMode || 'explorer');
+
+            // Automatically pull latest stars, progress & custom voices from Google Sheets on launch
+            if (getActiveScriptUrl()) {
+                pullFromCloud(false);
+            }
         };
     </script>
 </body>
